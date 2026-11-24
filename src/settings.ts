@@ -161,12 +161,16 @@ const csv = (r: any[]) => {
             <summary style="font-size: 13px; font-weight: 600; color: var(--mu); cursor: pointer;">
               ⚙️ Supabase Credentials & Connection Settings
             </summary>
-            <div style="margin-top: 12px;">
-              <label for="cfg-sb-url">Supabase Project URL</label>
-              <input id="cfg-sb-url" placeholder="https://yourproject.supabase.co" value="${esc(cloudCfg.url)}">
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
+              <div class="form-field">
+                <label for="cfg-sb-url">Supabase Project URL</label>
+                <input id="cfg-sb-url" placeholder="https://yourproject.supabase.co" value="${esc(cloudCfg.url)}">
+              </div>
 
-              <label for="cfg-sb-key">Supabase Public Anon Key</label>
-              <input id="cfg-sb-key" type="password" placeholder="sb_publishable_..." value="${esc(cloudCfg.key)}">
+              <div class="form-field">
+                <label for="cfg-sb-key">Supabase Public Anon Key</label>
+                <input id="cfg-sb-key" type="password" placeholder="sb_publishable_..." value="${esc(cloudCfg.key)}">
+              </div>
 
               <button class="btn btn-secondary" id="btn-save-cloud-keys" type="button" style="margin-top: 10px;">
                 Save Cloud Configuration

@@ -250,12 +250,12 @@ export const renderAuthPage = () => {
           </div>
 
           <form id="setup-ws-form" onsubmit="return false;">
-            <div>
+            <div class="form-field">
               <label for="ws-name">Business / Finance Enterprise Name *</label>
               <input id="ws-name" type="text" placeholder="e.g. Sri Krishna Finance, City Micro Collections" required autofocus value="${esc(currentUser.business_name || '')}">
             </div>
 
-            <div>
+            <div class="form-field">
               <label>Collection Frequencies to Enable</label>
               <div class="segmented-tab-bar" id="mode-pills" style="margin-top: 6px; margin-bottom: 0;">
                 <button class="segmented-tab selected" data-mode="both" type="button">Daily & Weekly</button>
@@ -264,7 +264,7 @@ export const renderAuthPage = () => {
               </div>
             </div>
 
-            <div>
+            <div class="form-field">
               <label for="curr">Base Ledger Currency</label>
               <input id="curr" type="text" value="₹ (INR) · Indian Rupee" readonly style="opacity: 0.8; cursor: not-allowed;">
             </div>
@@ -342,12 +342,12 @@ export const renderAuthPage = () => {
 
         <!-- 1. Client Sign In Form -->
         <form id="signin-form" onsubmit="return false;">
-          <div>
+          <div class="form-field">
             <label for="si-email">Business Owner / Operator Email</label>
             <input id="si-email" type="email" placeholder="owner@enterprise.com" required autofocus autocomplete="username">
           </div>
 
-          <div>
+          <div class="form-field">
             <label for="si-pass">Account Password</label>
             <input id="si-pass" type="password" placeholder="••••••••" required autocomplete="current-password">
           </div>
@@ -359,32 +359,32 @@ export const renderAuthPage = () => {
 
         <!-- 2. Request Rental License (Client Registration) -->
         <form id="signup-form" onsubmit="return false;" style="display: none;">
-          <div>
+          <div class="form-field">
             <label for="su-name">Full Name / Operator *</label>
             <input id="su-name" type="text" placeholder="e.g. Ramesh Kumar" required>
           </div>
 
-          <div>
+          <div class="form-field">
             <label for="su-biz">Business / Shop / Finance Enterprise Name *</label>
             <input id="su-biz" type="text" placeholder="e.g. Sri Krishna Finance, City Micro Collections" required>
           </div>
 
-          <div>
+          <div class="form-field">
             <label for="su-phone">Official Mobile Phone Number *</label>
             <input id="su-phone" type="tel" placeholder="10-digit mobile number" required>
           </div>
 
-          <div>
+          <div class="form-field">
             <label for="su-email">Business Email (for verification & login) *</label>
             <input id="su-email" type="email" placeholder="owner@enterprise.com" required>
           </div>
 
-          <div>
+          <div class="form-field">
             <label for="su-pass">Create Account Password *</label>
             <input id="su-pass" type="password" placeholder="Minimum 6 characters" required>
           </div>
 
-          <div style="font-size: 12px; color: var(--mu); line-height: 1.45; background: var(--in); padding: 12px 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--warning);">
+          <div style="font-size: 12px; color: var(--mu); line-height: 1.45; background: var(--in); padding: 12px 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--warning); margin: 4px 0;">
             🔒 <b>Enterprise Rental Gating:</b><br>
             All tenant registrations require administrative review and rental license activation by platform administration before business workspaces can be launched.
           </div>

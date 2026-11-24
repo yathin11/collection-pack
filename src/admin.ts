@@ -36,12 +36,12 @@ const renderAdminPortal = () => {
           </div>
 
           <form id="admin-login-form" onsubmit="return false;">
-            <div>
+            <div class="form-field">
               <label for="adm-email">Super Admin Email</label>
               <input id="adm-email" type="email" value="${SUPER_ADMIN_EMAIL}" required autofocus readonly style="opacity: 0.85;">
             </div>
 
-            <div>
+            <div class="form-field">
               <label for="adm-pass">Master Password</label>
               <input id="adm-pass" type="password" placeholder="••••••••" required autocomplete="current-password">
             </div>

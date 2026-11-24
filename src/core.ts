@@ -1262,6 +1262,15 @@ export async function boot(): Promise<Workspace> {
           </div>
         </div>
       </div>
+      <nav class="header-nav">
+        ${NAV_ITEMS.map(([h, icon, title]) => `
+          <a href="${h}.html" class="header-nav-item ${h === hh ? 'active' : ''}">
+            <span class="header-nav-icon">${icon}</span>
+            <span class="header-nav-label">${title}</span>
+          </a>
+        `).join('')}
+      </nav>
+
       <div class="header-actions">
         ${isAdmin ? `
           <a class="btn btn-outline" href="admin.html" style="font-size: 11px; padding: 5px 10px; color: #f59e0b; border-color: #f59e0b; text-decoration: none; font-weight: 700;">

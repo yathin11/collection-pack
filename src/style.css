@@ -109,7 +109,7 @@ body {
   color: var(--tx);
   min-height: 100vh;
   line-height: 1.5;
-  padding-bottom: 90px;
+  padding-bottom: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -126,7 +126,13 @@ a {
 .wrap {
   max-width: 960px;
   margin: 0 auto;
-  padding: 20px 16px 40px;
+  padding: 24px 16px 110px;
+}
+
+@media (min-width: 860px) {
+  .wrap {
+    padding: 24px 20px 48px;
+  }
 }
 
 .wrap-wide {
@@ -436,17 +442,43 @@ a {
 form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+}
+
+.form-field, .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.form-row {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row-2 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-row-3 {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--tx-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   display: block;
-  margin-bottom: -6px;
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.form-field label, .form-group label {
+  margin-bottom: 0;
 }
 
 input, select, textarea {
@@ -460,6 +492,8 @@ input, select, textarea {
   outline: none;
   transition: all 0.2s ease;
   width: 100%;
+  display: block;
+  margin: 0;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -934,8 +968,47 @@ input::placeholder {
 }
 
 /* -------------------------------------------------------------
-   Bottom Floating Dock Navigation
+   MNC SaaS Desktop Header Navigation & Responsive Floating Dock
    ------------------------------------------------------------- */
+.header-nav {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  background: var(--in);
+  padding: 4px 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+}
+
+.header-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: var(--radius-sm);
+  color: var(--mu);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-nav-item:hover {
+  color: var(--tx);
+  background: var(--card-hover);
+}
+
+.header-nav-item.active {
+  color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: var(--shadow-xs);
+}
+
+.header-nav-icon {
+  font-size: 14px;
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -962,6 +1035,24 @@ input::placeholder {
     border: 1px solid var(--card-border);
     padding: 8px 22px;
     box-shadow: var(--shadow-xl);
+  }
+}
+
+@media (min-width: 860px) {
+  .header-nav {
+    display: inline-flex;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 859px) {
+  .header-nav {
+    display: none !important;
+  }
+  .bottom-nav {
+    display: flex;
   }
 }
 
