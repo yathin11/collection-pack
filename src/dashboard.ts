@@ -81,14 +81,14 @@ import {
             <div class="progress-fill" style="width: ${progressPercent}%;"></div>
           </div>
 
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a class="btn btn-primary" href="today.html" style="flex: 1; min-width: 180px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;">
+            <a class="btn btn-primary" href="today.html" style="flex: 1 1 200px;">
               🚀 Start Today's Collection (${list.length} stops)
             </a>
-            <a class="btn btn-secondary" href="customers.html" style="flex-shrink: 0;">
+            <a class="btn btn-secondary" href="customers.html" style="flex: 1 1 120px;">
               ＋ Add Loan
             </a>
-            <a class="btn btn-secondary" href="route.html" style="flex-shrink: 0;">
+            <a class="btn btn-secondary" href="route.html" style="flex: 1 1 120px;">
               🧭 Map Route
             </a>
           </div>

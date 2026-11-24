@@ -1,30 +1,32 @@
 /* -------------------------------------------------------------
-   Collection Manager - Enterprise MNC SaaS Design System (2026 Edition)
+   Collection Manager - Minimal Corporate Enterprise SaaS (2026)
+   Clean, Disciplined, High-Density & Mobile-First
    ------------------------------------------------------------- */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 
 :root {
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* Disciplined Corporate Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 9999px;
 
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 6px 12px -2px rgba(15, 23, 42, 0.06), 0 3px 6px -2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 16px 32px -4px rgba(15, 23, 42, 0.08), 0 6px 12px -4px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 24px 48px -12px rgba(15, 23, 42, 0.12);
-  --shadow-glow: 0 0 28px -4px rgba(79, 70, 229, 0.25);
+  /* Subtle Minimalist Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
 
-  /* Light Theme Palette (Corporate MNC Clean) */
+  /* Minimal Corporate Light Palette */
   --bg: #f8fafc;
-  --bg-gradient: radial-gradient(ellipse at 50% 0%, #edf2f7 0%, #f8fafc 75%);
+  --bg-gradient: none;
   --card: #ffffff;
   --card-subtle: #f8fafc;
   --card-border: #e2e8f0;
@@ -32,63 +34,83 @@
   --tx: #0f172a;
   --tx-secondary: #334155;
   --mu: #64748b;
-  --in: #f1f5f9;
+  --in: #f8fafc;
   --in-focus: #ffffff;
   --bd: #cbd5e1;
 
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #eef2ff;
-  --primary-text: #3730a3;
-  --primary-glow: rgba(79, 70, 229, 0.15);
+  /* Minimal Corporate Cobalt / Navy */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-light: #eff6ff;
+  --primary-text: #1e40af;
+  --primary-border: #bfdbfe;
+  --primary-glow: rgba(37, 99, 235, 0.12);
 
+  /* Status Tokens */
   --success: #059669;
   --success-hover: #047857;
   --success-light: #ecfdf5;
   --success-text: #065f46;
+  --success-border: #a7f3d0;
 
   --warning: #d97706;
   --warning-light: #fffbeb;
   --warning-text: #92400e;
+  --warning-border: #fde68a;
 
-  --risk: #e11d48;
-  --risk-light: #fff1f2;
-  --risk-text: #9f1239;
+  --risk: #dc2626;
+  --risk-light: #fef2f2;
+  --risk-text: #991b1b;
+  --risk-border: #fecaca;
+
+  /* Header & Navigation */
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --nav-border: #e2e8f0;
 }
 
 [data-theme="dark"] {
-  /* Dark Theme Palette (Linear / Stripe Midnight Obsidian) */
-  --bg: #090d16;
-  --bg-gradient: radial-gradient(ellipse at 50% -10%, #161f36 0%, #090d16 80%);
-  --card: #111726;
-  --card-subtle: #161e31;
+  /* Minimal Corporate Dark Palette (Linear Obsidian Slate) */
+  --bg: #0b0f19;
+  --bg-gradient: none;
+  --card: #111827;
+  --card-subtle: #162032;
   --card-border: rgba(255, 255, 255, 0.08);
-  --card-hover: #1a233a;
+  --card-hover: #1a2438;
   --tx: #f8fafc;
   --tx-secondary: #cbd5e1;
   --mu: #94a3b8;
-  --in: #151d30;
-  --in-focus: #1c263e;
+  --in: #141d2e;
+  --in-focus: #182338;
   --bd: #232e47;
 
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: rgba(99, 102, 241, 0.15);
-  --primary-text: #a5b4fc;
-  --primary-glow: rgba(99, 102, 241, 0.25);
+  /* Dark Theme Corporate Accent */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-active: #1d4ed8;
+  --primary-light: rgba(59, 130, 246, 0.12);
+  --primary-text: #93c5fd;
+  --primary-border: rgba(59, 130, 246, 0.3);
+  --primary-glow: rgba(59, 130, 246, 0.2);
 
   --success: #10b981;
   --success-hover: #059669;
-  --success-light: rgba(16, 185, 129, 0.15);
+  --success-light: rgba(16, 185, 129, 0.12);
   --success-text: #6ee7b7;
+  --success-border: rgba(16, 185, 129, 0.25);
 
   --warning: #f59e0b;
-  --warning-light: rgba(245, 158, 11, 0.15);
+  --warning-light: rgba(245, 158, 11, 0.12);
   --warning-text: #fde68a;
+  --warning-border: rgba(245, 158, 11, 0.25);
 
-  --risk: #f43f5e;
-  --risk-light: rgba(244, 63, 94, 0.15);
-  --risk-text: #fda4af;
+  --risk: #ef4444;
+  --risk-light: rgba(239, 68, 68, 0.12);
+  --risk-text: #fca5a5;
+  --risk-border: rgba(239, 68, 68, 0.25);
+
+  --nav-bg: rgba(17, 24, 39, 0.95);
+  --nav-border: rgba(255, 255, 255, 0.08);
 }
 
 /* -------------------------------------------------------------
@@ -101,11 +123,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);
-  background-image: var(--bg-gradient);
-  background-attachment: fixed;
   color: var(--tx);
   min-height: 100vh;
   line-height: 1.5;
@@ -117,16 +141,16 @@ body {
 a {
   color: inherit;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease;
 }
 
 /* -------------------------------------------------------------
-   Layout Wrappers
+   Layout Wrappers (Desktop & Mobile Optimized)
    ------------------------------------------------------------- */
 .wrap {
   max-width: 960px;
   margin: 0 auto;
-  padding: 24px 16px 110px;
+  padding: 16px 14px calc(84px + env(safe-area-inset-bottom, 16px));
 }
 
 @media (min-width: 860px) {
@@ -136,730 +160,19 @@ a {
 }
 
 .wrap-wide {
-  max-width: 1240px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 20px 60px;
+  padding: 16px 14px calc(84px + env(safe-area-inset-bottom, 16px));
 }
 
-/* -------------------------------------------------------------
-   MNC SaaS Enterprise Navbar
-   ------------------------------------------------------------- */
-.enterprise-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  margin-bottom: 28px;
-  background: var(--card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.enterprise-logo-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.enterprise-logo-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--primary) 0%, #312e81 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  box-shadow: var(--shadow-sm);
-}
-
-.enterprise-brand-title {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--tx);
-  line-height: 1.2;
-}
-
-.enterprise-brand-subtitle {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--mu);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.enterprise-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.live-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: var(--radius-full);
-  background: var(--success-light);
-  color: var(--success-text);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.live-pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 8px var(--success);
-  animation: pulseDot 2s infinite;
-}
-
-@keyframes pulseDot {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.7; }
-}
-
-/* -------------------------------------------------------------
-   MNC SaaS Landing & Auth Split Grid
-   ------------------------------------------------------------- */
-.saas-landing-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 32px;
-  align-items: start;
-}
-
-@media (min-width: 960px) {
-  .saas-landing-grid {
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 48px;
-    padding-top: 10px;
+@media (min-width: 860px) {
+  .wrap-wide {
+    padding: 24px 24px 60px;
   }
 }
 
-.saas-hero-left {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.hero-pill-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  background: var(--primary-light);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-  width: fit-content;
-  border: 1px solid var(--primary-glow);
-}
-
-.hero-main-title {
-  font-size: 38px;
-  font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: -0.03em;
-  color: var(--tx);
-}
-
-[data-theme="dark"] .hero-main-title {
-  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.hero-main-desc {
-  font-size: 16px;
-  color: var(--mu);
-  line-height: 1.6;
-  max-width: 560px;
-}
-
-.hero-features-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 6px;
-}
-
-.hero-feature-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px 18px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xs);
-  transition: all 0.2s ease;
-}
-
-.hero-feature-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
-}
-
-.hero-feature-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--in);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.hero-feature-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--tx);
-  margin-bottom: 2px;
-}
-
-.hero-feature-desc {
-  font-size: 12.5px;
-  color: var(--mu);
-  line-height: 1.45;
-}
-
-.hero-metrics-strip {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  padding-top: 14px;
-  border-top: 1px dashed var(--card-border);
-}
-
-.hero-metric-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.hero-metric-num {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--tx);
-  letter-spacing: -0.02em;
-}
-
-.hero-metric-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--mu);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 /* -------------------------------------------------------------
-   MNC Auth Card (Right Column)
-   ------------------------------------------------------------- */
-.saas-auth-card {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-xl);
-  padding: 32px 28px;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  overflow: hidden;
-}
-
-.saas-auth-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary) 0%, #818cf8 50%, var(--success) 100%);
-}
-
-.saas-auth-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.saas-auth-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--tx);
-  margin-bottom: 6px;
-}
-
-.saas-auth-subtitle {
-  font-size: 13px;
-  color: var(--mu);
-  line-height: 1.45;
-}
-
-/* Enterprise Segmented Tabs */
-.segmented-tab-bar {
-  display: flex;
-  background: var(--in);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  gap: 4px;
-  margin-bottom: 24px;
-  border: 1px solid var(--card-border);
-}
-
-.segmented-tab {
-  flex: 1;
-  text-align: center;
-  padding: 10px 8px;
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--mu);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 0;
-  background: transparent;
-}
-
-.segmented-tab.selected {
-  background: var(--card);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-}
-
-/* -------------------------------------------------------------
-   MNC Modern Forms & Inputs
-   ------------------------------------------------------------- */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-field, .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 2px;
-}
-
-.form-row {
-  display: grid;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.form-row-2 {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.form-row-3 {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-}
-
-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--tx-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  display: block;
-  margin-bottom: 6px;
-  line-height: 1.35;
-}
-
-.form-field label, .form-group label {
-  margin-bottom: 0;
-}
-
-input, select, textarea {
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--tx);
-  background: var(--in);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  padding: 11px 14px;
-  outline: none;
-  transition: all 0.2s ease;
-  width: 100%;
-  display: block;
-  margin: 0;
-}
-
-input:focus, select:focus, textarea:focus {
-  background: var(--in-focus);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-glow);
-}
-
-input::placeholder {
-  color: var(--mu);
-  opacity: 0.7;
-}
-
-/* -------------------------------------------------------------
-   Enterprise Buttons
-   ------------------------------------------------------------- */
-.btn {
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  padding: 11px 18px;
-  border-radius: var(--radius-sm);
-  border: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  line-height: 1.2;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
-  color: #ffffff;
-  box-shadow: var(--shadow-sm), 0 2px 8px var(--primary-glow);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-hover) 0%, #3730a3 100%);
-  box-shadow: var(--shadow-md), 0 4px 14px var(--primary-glow);
-}
-
-.btn-secondary {
-  background: var(--in);
-  color: var(--tx);
-  border: 1px solid var(--card-border);
-}
-
-.btn-secondary:hover {
-  background: var(--card-hover);
-  border-color: var(--bd);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--tx);
-  border: 1px solid var(--card-border);
-}
-
-.btn-outline:hover {
-  background: var(--card-hover);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.btn-danger {
-  background: var(--risk-light);
-  color: var(--risk-text);
-  border: 1px solid rgba(244, 63, 94, 0.25);
-}
-
-.btn-danger:hover {
-  background: var(--risk);
-  color: #ffffff;
-}
-
-.btn-block {
-  width: 100%;
-}
-
-/* -------------------------------------------------------------
-   MNC Cards & Component Surfaces
-   ------------------------------------------------------------- */
-.card {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  padding: 22px 20px;
-  margin-bottom: 18px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-md);
-}
-
-.card-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--tx);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sub-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--mu);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: block;
-}
-
-/* -------------------------------------------------------------
-   Stats KPI Grid
-   ------------------------------------------------------------- */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-@media (min-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-  }
-}
-
-.stat-box {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-md);
-  padding: 16px 14px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-xs);
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-box:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--mu);
-  margin-bottom: 4px;
-}
-
-.stat-val {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--tx);
-  line-height: 1.2;
-}
-
-.stat-sub {
-  font-size: 11.5px;
-  color: var(--mu);
-  margin-top: 4px;
-}
-
-.stat-success { border-left: 3px solid var(--success); }
-.stat-warning { border-left: 3px solid var(--warning); }
-.stat-risk { border-left: 3px solid var(--risk); }
-
-.c-success { color: var(--success); }
-.c-warning { color: var(--warning); }
-.c-risk { color: var(--risk); }
-
-/* -------------------------------------------------------------
-   Collection Items & Customer Cards
-   ------------------------------------------------------------- */
-.collect-card {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: var(--shadow-xs);
-  transition: all 0.2s ease;
-}
-
-.collect-card:hover {
-  border-color: var(--bd);
-  box-shadow: var(--shadow-sm);
-}
-
-.collect-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.customer-name {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--tx);
-  line-height: 1.25;
-}
-
-.balance-badge {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.balance-num {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--tx);
-}
-
-.collect-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--mu);
-  margin-top: 8px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--in);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin: 12px 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--success) 100%);
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.action-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.action-chip {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  background: var(--in);
-  color: var(--primary);
-  border: 1px solid var(--card-border);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.action-chip:hover {
-  background: var(--primary-light);
-  border-color: var(--primary);
-}
-
-.action-chip-success {
-  color: var(--success);
-}
-.action-chip-success:hover {
-  background: var(--success-light);
-  border-color: var(--success);
-}
-
-.action-chip-undo {
-  color: var(--mu);
-}
-
-.collect-action-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--card-border);
-  flex-wrap: wrap;
-}
-
-.input-with-presets {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.collect-amt-input {
-  width: 110px;
-  font-size: 16px;
-  font-weight: 800;
-  text-align: center;
-  padding: 9px 8px;
-  background: var(--in);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  color: var(--tx);
-}
-
-.preset-btns {
-  display: flex;
-  gap: 4px;
-}
-
-.preset-btn {
-  background: var(--in);
-  border: 1px solid var(--card-border);
-  color: var(--tx-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 7px 9px;
-  border-radius: var(--radius-xs);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.preset-btn:hover {
-  background: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--primary);
-}
-
-.collect-btn {
-  flex-shrink: 0;
-  padding: 9px 18px;
-  font-size: 13.5px;
-}
-
-/* -------------------------------------------------------------
-   Top Sticky Header (Dashboard Modules)
+   Top Sticky Header (Minimal Corporate)
    ------------------------------------------------------------- */
 .top-header {
   position: sticky;
@@ -868,115 +181,138 @@ input::placeholder {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
-  background: var(--card);
+  padding: 10px 14px;
+  background: var(--nav-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--card-border);
-  box-shadow: var(--shadow-sm);
+  gap: 12px;
+}
+
+@media (min-width: 860px) {
+  .top-header {
+    padding: 12px 24px;
+  }
 }
 
 .brand-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .brand-avatar {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   background: var(--primary-light);
   color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  box-shadow: var(--shadow-xs);
+  font-size: 17px;
+  flex-shrink: 0;
+  border: 1px solid var(--primary-border);
 }
 
 .brand-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .brand-title {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--tx);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brand-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 3px;
-  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: var(--radius-full);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  line-height: 1.3;
 }
 
 .badge-local {
   background: var(--warning-light);
   color: var(--warning-text);
+  border: 1px solid var(--warning-border);
 }
 
 .badge-cloud {
   background: var(--success-light);
   color: var(--success-text);
+  border: 1px solid var(--success-border);
 }
 
 .date-chip {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--mu);
+}
+
+@media (max-width: 600px) {
+  .date-chip {
+    display: none;
+  }
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .theme-btn {
   background: var(--in);
   border: 1px solid var(--card-border);
   color: var(--tx);
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .theme-btn:hover {
   background: var(--card-hover);
-  transform: scale(1.04);
 }
 
 /* -------------------------------------------------------------
-   MNC SaaS Desktop Header Navigation & Responsive Floating Dock
+   Desktop Header Navigation
    ------------------------------------------------------------- */
 .header-nav {
   display: none;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: var(--in);
-  padding: 4px 6px;
-  border-radius: var(--radius-md);
+  padding: 3px 4px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--card-border);
 }
 
@@ -984,13 +320,13 @@ input::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 13px;
-  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
   color: var(--mu);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
@@ -1001,41 +337,64 @@ input::placeholder {
 
 .header-nav-item.active {
   color: var(--primary);
-  background: var(--primary-light);
+  background: var(--card);
   box-shadow: var(--shadow-xs);
+  font-weight: 700;
 }
 
 .header-nav-icon {
   font-size: 14px;
 }
 
+/* -------------------------------------------------------------
+   Mobile Bottom Navigation Dock (Edge-to-Edge Touch Friendly)
+   ------------------------------------------------------------- */
 .bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: var(--card);
+  background: var(--nav-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--card-border);
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 6px 2px calc(6px + env(safe-area-inset-bottom, 0px));
   z-index: 100;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
 }
 
-@media (min-width: 640px) {
-  .bottom-nav {
-    max-width: 620px;
-    margin: 0 auto;
-    bottom: 16px;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--card-border);
-    padding: 8px 22px;
-    box-shadow: var(--shadow-xl);
-  }
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  flex: 1;
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  color: var(--mu);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.nav-icon {
+  font-size: 19px;
+  line-height: 1;
 }
 
 @media (min-width: 860px) {
@@ -1056,27 +415,940 @@ input::placeholder {
   }
 }
 
-.nav-item {
+/* -------------------------------------------------------------
+   MNC SaaS Landing & Auth Page (Minimal Corporate)
+   ------------------------------------------------------------- */
+.enterprise-navbar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+}
+
+.enterprise-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.enterprise-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #ffffff;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
+  font-size: 18px;
+}
+
+.enterprise-brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--tx);
+  line-height: 1.2;
+}
+
+.enterprise-brand-subtitle {
+  font-size: 10.5px;
+  font-weight: 600;
   color: var(--mu);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.enterprise-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--success-light);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+
+.live-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+.saas-landing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .saas-landing-grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    padding-top: 10px;
+  }
+}
+
+.saas-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  width: fit-content;
+  border: 1px solid var(--primary-border);
+}
+
+.hero-main-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--tx);
+}
+
+@media (min-width: 640px) {
+  .hero-main-title {
+    font-size: 38px;
+  }
+}
+
+.hero-main-desc {
+  font-size: 15px;
+  color: var(--mu);
+  line-height: 1.55;
+  max-width: 540px;
+}
+
+.hero-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hero-feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease;
+}
+
+.hero-feature-card:hover {
+  border-color: var(--bd);
+}
+
+.hero-feature-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--in);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.hero-feature-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--tx);
+  margin-bottom: 2px;
+}
+
+.hero-feature-desc {
+  font-size: 12px;
+  color: var(--mu);
+  line-height: 1.4;
+}
+
+.hero-metrics-strip {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px dashed var(--card-border);
+}
+
+.hero-metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-metric-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: -0.02em;
+}
+
+.hero-metric-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--mu);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* -------------------------------------------------------------
+   Minimal Corporate Auth Card
+   ------------------------------------------------------------- */
+.saas-auth-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 22px 18px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .saas-auth-card {
+    padding: 30px 26px;
+  }
+}
+
+.saas-auth-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.saas-auth-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+  margin-bottom: 4px;
+}
+
+.saas-auth-subtitle {
+  font-size: 12.5px;
+  color: var(--mu);
+  line-height: 1.45;
+}
+
+.segmented-tab-bar {
+  display: flex;
+  background: var(--in);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 20px;
+  border: 1px solid var(--card-border);
+}
+
+.segmented-tab {
+  flex: 1;
+  text-align: center;
+  padding: 8px 6px;
+  min-height: 38px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  color: var(--mu);
+  transition: all 0.15s ease;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.segmented-tab.selected {
+  background: var(--card);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-xs);
+}
+
+/* -------------------------------------------------------------
+   Minimal Corporate Forms & Touch Inputs (Mobile Friendly)
+   ------------------------------------------------------------- */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-field, .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.form-row {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.form-row-2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 540px) {
+  .form-row-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.form-row-3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .form-row-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+label {
   font-size: 11px;
   font-weight: 700;
-  transition: all 0.2s ease;
+  color: var(--tx-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 6px;
+  line-height: 1.3;
 }
 
-.nav-item.active {
+.form-field label, .form-group label {
+  margin-bottom: 0;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--tx);
+  background: var(--in);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  min-height: 42px;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  display: block;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Prevent iOS Auto-Zoom on Mobile (< 768px) */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+}
+
+input:focus, select:focus, textarea:focus {
+  background: var(--in-focus);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+input::placeholder {
+  color: var(--mu);
+  opacity: 0.7;
+}
+
+/* -------------------------------------------------------------
+   Buttons (Minimal Corporate & Touch Friendly)
+   ------------------------------------------------------------- */
+.btn {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 16px;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--in);
+  color: var(--tx);
+  border-color: var(--card-border);
+}
+
+.btn-secondary:hover {
+  background: var(--card-hover);
+  border-color: var(--bd);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--tx);
+  border-color: var(--card-border);
+}
+
+.btn-outline:hover {
+  background: var(--card-hover);
+  border-color: var(--primary);
   color: var(--primary);
-  background: var(--primary-light);
 }
 
-.nav-icon {
-  font-size: 18px;
+.btn-danger {
+  background: var(--risk-light);
+  color: var(--risk-text);
+  border-color: var(--risk-border);
+}
+
+.btn-danger:hover {
+  background: var(--risk);
+  color: #ffffff;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* -------------------------------------------------------------
+   Cards & Surfaces
+   ------------------------------------------------------------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 16px 14px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease;
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 20px 20px;
+    margin-bottom: 16px;
+  }
+}
+
+.card:hover {
+  border-color: var(--bd);
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--tx);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--mu);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+}
+
+/* -------------------------------------------------------------
+   Stats KPI Grid (Clean 2-Column Mobile & 4-Column Desktop)
+   ------------------------------------------------------------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+}
+
+.stat-box {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease;
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .stat-box {
+    padding: 14px 16px;
+  }
+}
+
+.stat-box:hover {
+  border-color: var(--bd);
+}
+
+.stat-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mu);
+  margin-bottom: 3px;
+}
+
+.stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .stat-val {
+    font-size: 22px;
+  }
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--mu);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-success { border-left: 3px solid var(--success); }
+.stat-warning { border-left: 3px solid var(--warning); }
+.stat-risk { border-left: 3px solid var(--risk); }
+
+.c-success { color: var(--success); }
+.c-warning { color: var(--warning); }
+.c-risk { color: var(--risk); }
+
+/* -------------------------------------------------------------
+   Collection Items & Customer Cards (Touch Ergonomic)
+   ------------------------------------------------------------- */
+.collect-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease;
+}
+
+@media (min-width: 640px) {
+  .collect-card {
+    padding: 16px;
+  }
+}
+
+.collect-card:hover {
+  border-color: var(--bd);
+}
+
+.collect-card.is-collected {
+  border-left: 4px solid var(--success);
+}
+
+.collect-card.is-risk {
+  border-left: 4px solid var(--risk);
+}
+
+.collect-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.customer-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--tx);
+  line-height: 1.3;
+}
+
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.3;
+}
+
+.tag-mode {
+  background: var(--in);
+  color: var(--tx-secondary);
+  border: 1px solid var(--card-border);
+  text-transform: capitalize;
+}
+
+.tag-overdue {
+  background: var(--warning-light);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
+}
+
+.tag-risk {
+  background: var(--risk-light);
+  color: var(--risk-text);
+  border: 1px solid var(--risk-border);
+}
+
+.tag-plan {
+  background: var(--primary-light);
+  color: var(--primary-text);
+  border: 1px solid var(--primary-border);
+}
+
+.tag-success {
+  background: var(--success-light);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+
+.balance-badge {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.balance-num {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+
+.collect-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 12px;
+  color: var(--mu);
+  margin-top: 8px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--in);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.progress-fill.fill-risk {
+  background: var(--risk);
+}
+
+.action-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.action-chip {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 11px;
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--in);
+  color: var(--tx-secondary);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+.action-chip:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.action-chip-success {
+  color: var(--success-text);
+  background: var(--success-light);
+  border-color: var(--success-border);
+}
+
+.action-chip-undo {
+  color: var(--mu);
+}
+
+.collect-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--card-border);
+  flex-wrap: wrap;
+}
+
+.input-with-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 170px;
+}
+
+.collect-amt-input {
+  width: 95px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 6px;
+  min-height: 38px;
+  background: var(--in);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .collect-amt-input {
+    font-size: 16px !important;
+    min-height: 42px;
+    width: 100px;
+  }
+}
+
+.preset-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.preset-btn {
+  background: var(--in);
+  border: 1px solid var(--card-border);
+  color: var(--tx-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 9px;
+  min-height: 38px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .preset-btn {
+    min-height: 42px;
+    padding: 6px 10px;
+  }
+}
+
+.preset-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.collect-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  min-height: 38px;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .collect-btn {
+    min-height: 42px;
+    padding: 8px 18px;
+    font-size: 14px;
+  }
+}
+
+.cleared-badge {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--success-light);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------
+   Search Box & Filter Chips
+   ------------------------------------------------------------- */
+.search-box-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mu);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.search-box-wrap input {
+  padding-left: 36px;
+}
+
+.chips-wrap {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  min-height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--in);
+  color: var(--mu);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.filter-chip:hover {
+  color: var(--tx);
+  border-color: var(--bd);
+}
+
+.filter-chip.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  font-weight: 700;
 }
 
 /* -------------------------------------------------------------
@@ -1085,9 +1357,9 @@ input::placeholder {
 .status-stepper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin: 20px 0;
-  padding: 18px;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 16px;
   background: var(--card-subtle);
   border-radius: var(--radius-md);
   border: 1px solid var(--card-border);
@@ -1096,17 +1368,17 @@ input::placeholder {
 .stepper-step {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .stepper-dot {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -1119,7 +1391,6 @@ input::placeholder {
 .stepper-dot.active {
   background: var(--warning);
   color: #ffffff;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
 .stepper-dot.pending {
@@ -1129,31 +1400,33 @@ input::placeholder {
 }
 
 .stepper-info h4 {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--tx);
 }
 
 .stepper-info p {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--mu);
   margin-top: 2px;
 }
 
 /* -------------------------------------------------------------
-   Ledger Table
+   Ledger Table (Responsive & Touch Scroll)
    ------------------------------------------------------------- */
 .ledger-table-wrap {
   overflow-x: auto;
-  margin: 14px 0;
-  border-radius: var(--radius-md);
+  -webkit-overflow-scrolling: touch;
+  margin: 12px 0;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--card-border);
 }
 
 .ledger-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 12.5px;
+  white-space: nowrap;
 }
 
 .ledger-table th {
@@ -1161,15 +1434,15 @@ input::placeholder {
   color: var(--tx-secondary);
   font-weight: 700;
   text-align: left;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--card-border);
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 10.5px;
   letter-spacing: 0.04em;
 }
 
 .ledger-table td {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--card-border);
   color: var(--tx);
 }
@@ -1190,14 +1463,14 @@ input::placeholder {
    Enterprise Footer
    ------------------------------------------------------------- */
 .saas-footer {
-  margin-top: 48px;
-  padding-top: 24px;
+  margin-top: 40px;
+  padding-top: 20px;
   border-top: 1px solid var(--card-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 14px;
   font-size: 12px;
   color: var(--mu);
 }
@@ -1205,7 +1478,7 @@ input::placeholder {
 .saas-footer-links {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .saas-admin-discrete-link {
@@ -1215,7 +1488,7 @@ input::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   cursor: pointer;
 }
 
@@ -1229,43 +1502,55 @@ input::placeholder {
    ------------------------------------------------------------- */
 .toast-container {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  top: 16px;
+  right: 16px;
+  left: 16px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: none;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .toast-container {
+    left: auto;
+    right: 20px;
+    top: 20px;
+    align-items: flex-end;
+  }
 }
 
 .toast {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-radius: var(--radius-md);
-  font-size: 13.5px;
-  font-weight: 700;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
   color: #ffffff;
   background: #0f172a;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  animation: slideInToast 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  animation: slideInToast 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: 90vw;
 }
 
 .toast-success { background: #065f46; border-color: #10b981; }
-.toast-error { background: #881337; border-color: #f43f5e; }
-.toast-info { background: #1e1b4b; border-color: #6366f1; }
+.toast-error { background: #991b1b; border-color: #ef4444; }
+.toast-info { background: #1e3a8a; border-color: #3b82f6; }
 
 .toast.fade-out {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-8px);
 }
 
 @keyframes slideInToast {
-  from { opacity: 0; transform: translateY(-16px); }
+  from { opacity: 0; transform: translateY(-12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -1274,24 +1559,24 @@ input::placeholder {
    ------------------------------------------------------------- */
 .error-card {
   text-align: center;
-  padding: 40px 24px;
-  max-width: 480px;
-  margin: 60px auto;
+  padding: 32px 18px;
+  max-width: 440px;
+  margin: 40px auto;
 }
 
 .error-icon {
-  font-size: 48px;
-  margin-bottom: 14px;
+  font-size: 40px;
+  margin-bottom: 12px;
 }
 
 .error-msg {
   color: var(--mu);
-  font-size: 14px;
-  margin: 10px 0 24px;
+  font-size: 13.5px;
+  margin: 8px 0 20px;
 }
 
 .error-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }

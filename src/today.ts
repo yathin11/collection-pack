@@ -49,14 +49,14 @@ async function render() {
   app.innerHTML = `
     <!-- Top Date Bar & Quick Switcher -->
     <div class="card noprint">
-      <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-        <div style="display: flex; gap: 8px; align-items: center; flex: 1; min-width: 200px;">
+      <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <div style="display: flex; gap: 6px; align-items: center; flex: 1 1 200px;">
           <input type="date" id="date-input" value="${on}" style="font-weight: 700; width: auto; flex: 1;">
-          <button class="btn btn-secondary" id="btn-today" type="button" style="padding: 10px 14px;">Today</button>
+          <button class="btn btn-secondary" id="btn-today" type="button" style="padding: 8px 12px; flex-shrink: 0;">Today</button>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <a class="btn btn-outline" href="plan.html" style="font-size: 13px;">📅 Plan Day</a>
-          <a class="btn btn-secondary" href="route.html" style="font-size: 13px;">🧭 Route Map</a>
+        <div style="display: flex; gap: 6px; flex: 1 1 auto; justify-content: flex-end;">
+          <a class="btn btn-outline" href="plan.html" style="font-size: 13px; flex: 1 1 auto; text-align: center;">📅 Plan Day</a>
+          <a class="btn btn-secondary" href="route.html" style="font-size: 13px; flex: 1 1 auto; text-align: center;">🧭 Route Map</a>
         </div>
       </div>
     </div>
