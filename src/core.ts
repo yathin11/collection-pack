@@ -12,6 +12,7 @@ export interface UserAccount {
   email: string;
   name: string;
   phone?: string;
+  business_name?: string;
   role: UserRole;
   status: UserStatus;
   workspace_id: string | null;
@@ -232,9 +233,9 @@ export function toggleTheme(): string {
 }
 
 // -------------------------------------------------------------
-// Local Storage Keys
+// Local Storage Keys & Cache Management
 // -------------------------------------------------------------
-const LS_KEYS = {
+export const LS_KEYS = {
   CURRENT_USER: 'cm_current_user',
   USERS_DIRECTORY: 'cm_users_directory',
   WORKSPACES: 'cm_workspaces',
@@ -244,6 +245,31 @@ const LS_KEYS = {
   PAYMENTS: 'cm_payments',
   PLAN_DAYS: 'cm_plan_days',
 };
+
+export function clearAllBrowserData(reload = true) {
+  try {
+    const keys = [
+      'cm_current_user',
+      'cm_users_directory',
+      'cm_workspaces',
+      'cm_current_workspace',
+      'cm_customers',
+      'cm_loans',
+      'cm_payments',
+      'cm_plan_days',
+      'cm_theme',
+      'cm_cloud_url',
+      'cm_cloud_key',
+    ];
+    keys.forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
+  } catch (e) {
+    console.error('Clear error:', e);
+  }
+  if (reload) {
+    location.href = 'index.html?cleared=1';
+  }
+}
 
 // -------------------------------------------------------------
 // User Management & Permissions Engine
@@ -272,6 +298,7 @@ export const userManager = {
         id: 'user_super_admin',
         email: SUPER_ADMIN_EMAIL,
         name: 'Super Admin',
+        business_name: 'Platform Administrator',
         role: 'admin',
         status: 'approved',
         workspace_id: null,
@@ -290,6 +317,7 @@ export const userManager = {
           id: 'user_super_admin',
           email: SUPER_ADMIN_EMAIL,
           name: 'Super Admin',
+          business_name: 'Platform Administrator',
           role: 'admin',
           status: 'approved',
           workspace_id: null,
@@ -327,6 +355,16 @@ export const userManager = {
     user.approved_by = adminId;
     user.approved_at = new Date().toISOString();
     user.email_verified = true;
+
+    // Auto-create their clean business workspace if business name was requested
+    if (user.business_name && !user.workspace_id) {
+      const existingWs = db.getWorkspaces().find(w => w.owner_id === user.id);
+      if (!existingWs) {
+        const ws = db.createFreshWorkspace(user.business_name, user.id, user.email);
+        user.workspace_id = ws.id;
+      }
+    }
+
     localStorage.setItem(LS_KEYS.USERS_DIRECTORY, JSON.stringify(list));
 
     const cur = userManager.getCurrentUser();
@@ -351,7 +389,7 @@ export const userManager = {
     return true;
   },
 
-  registerNewUser(email: string, name: string, phone = ''): UserAccount {
+  registerNewUser(email: string, name: string, phone = '', business_name = ''): UserAccount {
     const cleanEmail = email.trim().toLowerCase();
     const existing = userManager.getUsers().find(x => x.email.toLowerCase() === cleanEmail);
     if (existing) return existing;
@@ -362,6 +400,7 @@ export const userManager = {
       email: cleanEmail,
       name: name.trim() || cleanEmail.split('@')[0],
       phone: phone.trim(),
+      business_name: business_name.trim() || 'My Collection Business',
       role: 'owner',
       status: 'pending', // Strictly pending! Must be approved by Super Admin in admin.html
       workspace_id: null,
@@ -417,12 +456,27 @@ export const db = {
   },
 
   getCurrentWorkspace(): Workspace | null {
+    const curUser = userManager.getCurrentUser();
+    if (!curUser) return null;
+
     const raw = localStorage.getItem(LS_KEYS.CURRENT_WORKSPACE);
     if (raw) {
-      try { return JSON.parse(raw); } catch {}
+      try {
+        const ws: Workspace = JSON.parse(raw);
+        // If super admin, can view any workspace
+        if (curUser.role === 'admin' || ws.owner_id === curUser.id || ws.owner_email?.toLowerCase() === curUser.email.toLowerCase()) {
+          return ws;
+        }
+      } catch {}
     }
+
     const all = db.getWorkspaces();
-    return all.length > 0 ? all[0] : null;
+    if (curUser.role === 'admin') {
+      return all.length > 0 ? all[0] : null;
+    }
+    // Strict isolation: ONLY return a workspace owned by this user
+    const userWs = all.find(w => w.owner_id === curUser.id || w.owner_email?.toLowerCase() === curUser.email.toLowerCase());
+    return userWs || null;
   },
 
   setCurrentWorkspace(ws: Workspace) {
@@ -440,6 +494,12 @@ export const db = {
   },
 
   createFreshWorkspace(name: string, ownerId: string, ownerEmail: string, daily_on = true, weekly_on = true): Workspace {
+    const curUser = userManager.getCurrentUser();
+    // Security check: only approved accounts or super admin can create workspace
+    if (curUser && curUser.id === ownerId && curUser.status !== 'approved' && curUser.role !== 'admin') {
+      throw new Error('Account must be approved by Super Admin before creating a business workspace');
+    }
+
     const ws: Workspace = {
       id: uid(),
       name: name.trim() || 'My Collection Business',
@@ -454,11 +514,17 @@ export const db = {
     db.saveWorkspace(ws);
     db.setCurrentWorkspace(ws);
 
-    // Update user's workspace_id
-    const cur = userManager.getCurrentUser();
-    if (cur && cur.id === ownerId) {
-      cur.workspace_id = ws.id;
-      userManager.setCurrentUser(cur);
+    // Update user's workspace_id in directory
+    const users = userManager.getUsers();
+    const target = users.find(x => x.id === ownerId);
+    if (target) {
+      target.workspace_id = ws.id;
+      localStorage.setItem(LS_KEYS.USERS_DIRECTORY, JSON.stringify(users));
+    }
+
+    if (curUser && curUser.id === ownerId) {
+      curUser.workspace_id = ws.id;
+      userManager.setCurrentUser(curUser);
     }
     return ws;
   },
@@ -978,7 +1044,7 @@ export async function restoreWorkspaceFromCloud(): Promise<{ success: boolean; m
 // App Bootstrapper & Navigation
 // -------------------------------------------------------------
 const NAV_ITEMS: [string, string, string][] = [
-  ['index', '📊', 'Home'],
+  ['dashboard', '📊', 'Home'],
   ['today', '✅', 'Today'],
   ['route', '🧭', 'Route'],
   ['customers', '👥', 'Customers'],
@@ -1017,26 +1083,34 @@ export async function boot(): Promise<Workspace> {
 
   // Not signed in at all
   if (!user) {
-    if (here !== 'login') {
-      location.href = 'login.html';
+    if (here !== 'index' && here !== 'login') {
+      location.href = 'index.html';
       return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
     }
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // 2. Check Permission Status: If user is Pending approval, redirect to login pending state!
+  // 2. Check Permission Status: If user is Pending approval, redirect to SaaS auth pending screen!
   if (user.status === 'pending') {
-    if (here !== 'login') {
-      location.href = 'login.html?pending=1';
+    if (here !== 'index' && here !== 'login') {
+      location.href = 'index.html?pending=1';
       return { id: '', name: 'Pending Approval', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
+    }
+  }
+
+  // If rejected/suspended
+  if (user.status === 'rejected') {
+    if (here !== 'index' && here !== 'login') {
+      location.href = 'index.html?suspended=1';
+      return { id: '', name: 'Suspended', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
     }
   }
 
   // 3. User is Approved: check if they have a workspace
   let ws = db.getCurrentWorkspace();
   if (!ws) {
-    if (here !== 'login') {
-      location.href = 'login.html?setup=1';
+    if (here !== 'index' && here !== 'login') {
+      location.href = 'index.html?setup=1';
       return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
     }
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
@@ -1069,6 +1143,11 @@ export async function boot(): Promise<Workspace> {
         </div>
       </div>
       <div class="header-actions">
+        ${isAdmin ? `
+          <a class="btn btn-outline" href="admin.html" style="font-size: 11px; padding: 5px 10px; color: #f59e0b; border-color: #f59e0b; text-decoration: none; font-weight: 700;">
+            👑 Admin Panel
+          </a>
+        ` : ''}
         <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme" type="button">
           ${document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️'}
         </button>
@@ -1104,7 +1183,7 @@ export async function boot(): Promise<Workspace> {
     const client = getSupabase();
     if (client) { try { await client.auth.signOut(); } catch {} }
     toast('Signed out from workspace', 'info');
-    setTimeout(() => location.href = 'login.html', 300);
+    setTimeout(() => location.href = 'index.html', 300);
   });
 
   return ws;
@@ -1123,7 +1202,7 @@ export function renderErrorFallback(errorMsg: string) {
       <p class="error-msg">${esc(errorMsg)}</p>
       <div class="error-actions">
         <button class="btn btn-primary" onclick="location.reload()">🔄 Refresh Page</button>
-        <button class="btn btn-secondary" onclick="location.href='index.html'">🏠 Back to Home</button>
+        <button class="btn btn-secondary" onclick="location.href='dashboard.html'">🏠 Back to Dashboard</button>
       </div>
     </div>
   `;

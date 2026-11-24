@@ -16,6 +16,7 @@ import {
   esc,
   formatDate,
   SUPER_ADMIN_EMAIL,
+  clearAllBrowserData,
 } from './core';
 
 const stamp = () => new Date().toISOString().split('T')[0];
@@ -195,8 +196,11 @@ const csv = (r: any[]) => {
               👑 Open Super Admin Portal
             </a>
           ` : ''}
-          <button class="btn btn-danger" id="btn-logout" type="button" style="flex: 1;">
+          <button class="btn btn-secondary" id="btn-logout" type="button" style="flex: 1;">
             🚪 Sign Out
+          </button>
+          <button class="btn btn-danger" id="btn-clear-cache" type="button" style="flex: 1;">
+            🧹 Clear Cache & Reset App
           </button>
         </div>
       </div>
@@ -305,7 +309,14 @@ const csv = (r: any[]) => {
       const client = getSupabase();
       if (client) { try { await client.auth.signOut(); } catch {} }
       toast('Signed out successfully', 'info');
-      setTimeout(() => location.href = 'login.html', 300);
+      setTimeout(() => location.href = 'index.html', 300);
+    });
+
+    // Clear Browser Cache & Reset App
+    document.getElementById('btn-clear-cache')?.addEventListener('click', () => {
+      if (confirm('Clear all cached local sessions, tenants, and offline data from this browser?')) {
+        clearAllBrowserData(true);
+      }
     });
   } catch (err: any) {
     console.error('Settings render error:', err);

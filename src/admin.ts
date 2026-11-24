@@ -7,6 +7,7 @@ import {
   formatDate,
   money,
   SUPER_ADMIN_EMAIL,
+  clearAllBrowserData,
 } from './core';
 
 initTheme();
@@ -39,8 +40,8 @@ const renderAdminPortal = () => {
             <button class="btn btn-primary btn-block" id="btn-admin-login" type="button" style="margin-top: 18px; font-size: 15px; padding: 13px;">
               🔓 Sign In as Super Admin
             </button>
-            <a class="btn btn-secondary btn-block" href="login.html" style="margin-top: 10px; font-size: 13px;">
-              ← Back to Client Sign In
+            <a class="btn btn-secondary btn-block" href="index.html" style="margin-top: 10px; font-size: 13px;">
+              ← Back to SaaS Gateway
             </a>
           </form>
         </div>
@@ -102,9 +103,15 @@ const renderAdminPortal = () => {
             Logged in as: <b>${esc(SUPER_ADMIN_EMAIL)}</b> · SaaS License & Tenant Manager
           </p>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-outline" id="btn-admin-signout" type="button" style="font-size: 13px;">
-            🚪 Admin Sign Out
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a class="btn btn-secondary" href="index.html" style="font-size: 12px; padding: 7px 12px; text-decoration: none;">
+            🏠 SaaS Gateway
+          </a>
+          <button class="btn btn-outline" id="btn-admin-signout" type="button" style="font-size: 12px; padding: 7px 12px;">
+            🚪 Sign Out
+          </button>
+          <button class="btn btn-danger" id="btn-admin-clear-cache" type="button" style="font-size: 12px; padding: 7px 12px;">
+            🧹 Clear Cache
           </button>
         </div>
       </div>
@@ -158,7 +165,10 @@ const renderAdminPortal = () => {
               <div>
                 <b style="font-size: 16px; color: var(--tx);">${esc(u.name || 'Client')}</b>
                 <span class="badge badge-local" style="margin-left: 8px;">⏳ Awaiting Rental License</span>
-                <div style="font-size: 13px; color: var(--mu); margin-top: 4px;">
+                <div style="font-size: 13px; color: var(--tx-secondary); margin-top: 4px;">
+                  🏢 Requested Business: <b style="color:var(--primary);">${esc(u.business_name || 'Micro Finance')}</b>
+                </div>
+                <div style="font-size: 13px; color: var(--mu); margin-top: 2px;">
                   ✉️ <b>${esc(u.email)}</b> ${u.phone ? `· 📞 ${esc(u.phone)}` : ''} · Registered on ${formatDate(u.created_at)}
                 </div>
               </div>
@@ -353,7 +363,7 @@ const renderAdminPortal = () => {
       if (ws) {
         db.setCurrentWorkspace(ws);
         toast(`Opening workspace: ${ws.name}`, 'info');
-        setTimeout(() => location.href = 'index.html', 400);
+        setTimeout(() => location.href = 'dashboard.html', 400);
       }
     });
   });
@@ -363,6 +373,13 @@ const renderAdminPortal = () => {
     userManager.setCurrentUser(null);
     toast('Admin signed out', 'info');
     renderAdminPortal();
+  });
+
+  // Admin clear cache & reset platform
+  document.getElementById('btn-admin-clear-cache')?.addEventListener('click', () => {
+    if (confirm('Clear all cached platform storage and reset state? (Super Admin will remain registered).')) {
+      clearAllBrowserData(true);
+    }
   });
 };
 
