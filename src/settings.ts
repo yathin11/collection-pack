@@ -2,6 +2,7 @@ import {
   boot,
   db,
   userManager,
+  authSession,
   $,
   Workspace,
   toast,
@@ -305,7 +306,7 @@ const csv = (r: any[]) => {
 
     // Sign Out
     document.getElementById('btn-logout')?.addEventListener('click', async () => {
-      userManager.setCurrentUser(null);
+      authSession.endSession();
       const client = getSupabase();
       if (client) { try { await client.auth.signOut(); } catch {} }
       toast('Signed out successfully', 'info');

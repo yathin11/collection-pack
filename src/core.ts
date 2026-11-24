@@ -13,6 +13,7 @@ export interface UserAccount {
   name: string;
   phone?: string;
   business_name?: string;
+  password_hash?: string;
   role: UserRole;
   status: UserStatus;
   workspace_id: string | null;
@@ -111,13 +112,22 @@ export const DEFAULT_ADMIN_EMAIL = SUPER_ADMIN_EMAIL;
 // Cryptographic SHA-256 digest of super admin master password (plain text never exposed)
 const ADMIN_PASS_HASH = '42b3fd8795789a5bd0a373448e269ba32cc0fd92c10d1de3b3ed13c501272cb3';
 
+export async function hashPassword(input: string): Promise<string> {
+  if (!input) return '';
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+    return Array.from(new Uint8Array(buf))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    return '';
+  }
+}
+
 export async function verifyAdminPassword(input: string): Promise<boolean> {
   if (!input) return false;
   try {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input.trim()));
-    const hex = Array.from(new Uint8Array(buf))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    const hex = await hashPassword(input.trim());
     return hex === ADMIN_PASS_HASH;
   } catch {
     return false;
@@ -272,10 +282,68 @@ export function clearAllBrowserData(reload = true) {
 }
 
 // -------------------------------------------------------------
+// Active Authenticated Session Engine (sessionStorage backed)
+// -------------------------------------------------------------
+export interface ActiveSession {
+  userId: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  token: string;
+  authenticatedAt: number;
+}
+
+export const authSession = {
+  startSession(user: UserAccount): ActiveSession {
+    const session: ActiveSession = {
+      userId: user.id,
+      email: user.email.toLowerCase(),
+      role: user.role,
+      status: user.status,
+      token: 'sess_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+      authenticatedAt: Date.now(),
+    };
+    sessionStorage.setItem('cm_auth_session', JSON.stringify(session));
+    localStorage.setItem(LS_KEYS.CURRENT_USER, JSON.stringify(user));
+    return session;
+  },
+
+  getActiveSession(): ActiveSession | null {
+    const raw = sessionStorage.getItem('cm_auth_session');
+    if (!raw) return null;
+    try {
+      const sess: ActiveSession = JSON.parse(raw);
+      // Valid for 24 hours of active browser session
+      if (Date.now() - sess.authenticatedAt > 86400000) {
+        authSession.endSession();
+        return null;
+      }
+      return sess;
+    } catch {
+      return null;
+    }
+  },
+
+  endSession() {
+    sessionStorage.removeItem('cm_auth_session');
+    localStorage.removeItem(LS_KEYS.CURRENT_USER);
+    localStorage.removeItem(LS_KEYS.CURRENT_WORKSPACE);
+  },
+
+  isAuthenticated(): boolean {
+    const sess = authSession.getActiveSession();
+    return !!(sess && sess.userId && sess.status === 'approved');
+  },
+};
+
+// -------------------------------------------------------------
 // User Management & Permissions Engine
 // -------------------------------------------------------------
 export const userManager = {
   getCurrentUser(): UserAccount | null {
+    // Only return user if actively authenticated in current session
+    const sess = authSession.getActiveSession();
+    if (!sess) return null;
     const raw = localStorage.getItem(LS_KEYS.CURRENT_USER);
     if (!raw) return null;
     try { return JSON.parse(raw); } catch { return null; }
@@ -283,10 +351,9 @@ export const userManager = {
 
   setCurrentUser(user: UserAccount | null) {
     if (!user) {
-      localStorage.removeItem(LS_KEYS.CURRENT_USER);
+      authSession.endSession();
     } else {
-      localStorage.setItem(LS_KEYS.CURRENT_USER, JSON.stringify(user));
-      // Also update in directory
+      authSession.startSession(user);
       userManager.saveUser(user);
     }
   },
@@ -367,9 +434,11 @@ export const userManager = {
 
     localStorage.setItem(LS_KEYS.USERS_DIRECTORY, JSON.stringify(list));
 
-    const cur = userManager.getCurrentUser();
-    if (cur && cur.id === userId) {
-      userManager.setCurrentUser(user);
+    const sess = authSession.getActiveSession();
+    if (sess && sess.userId === userId) {
+      sess.status = 'approved';
+      sessionStorage.setItem('cm_auth_session', JSON.stringify(sess));
+      localStorage.setItem(LS_KEYS.CURRENT_USER, JSON.stringify(user));
     }
     return true;
   },
@@ -389,10 +458,12 @@ export const userManager = {
     return true;
   },
 
-  registerNewUser(email: string, name: string, phone = '', business_name = ''): UserAccount {
+  async registerNewUser(email: string, name: string, phone = '', business_name = '', password = ''): Promise<UserAccount> {
     const cleanEmail = email.trim().toLowerCase();
     const existing = userManager.getUsers().find(x => x.email.toLowerCase() === cleanEmail);
     if (existing) return existing;
+
+    const passHash = password ? await hashPassword(password) : '';
 
     // Normal client registrations are ALWAYS pending admin rental approval
     const user: UserAccount = {
@@ -401,6 +472,7 @@ export const userManager = {
       name: name.trim() || cleanEmail.split('@')[0],
       phone: phone.trim(),
       business_name: business_name.trim() || 'My Collection Business',
+      password_hash: passHash,
       role: 'owner',
       status: 'pending', // Strictly pending! Must be approved by Super Admin in admin.html
       workspace_id: null,
@@ -408,6 +480,55 @@ export const userManager = {
       email_verified: false,
     };
     return userManager.saveUser(user);
+  },
+
+  async verifyCredentials(email: string, pass: string): Promise<{ success: boolean; error?: string; user?: UserAccount; pending?: boolean; rejected?: boolean }> {
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if Super Admin
+    if (cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase()) {
+      const ok = await verifyAdminPassword(pass);
+      if (ok) {
+        const admin: UserAccount = {
+          id: 'user_super_admin',
+          email: SUPER_ADMIN_EMAIL,
+          name: 'Super Admin',
+          role: 'admin',
+          status: 'approved',
+          workspace_id: null,
+          created_at: new Date().toISOString(),
+          email_verified: true,
+        };
+        authSession.startSession(admin);
+        return { success: true, user: admin };
+      }
+      return { success: false, error: 'Invalid Super Admin password.' };
+    }
+
+    // Check Client
+    const user = userManager.getUsers().find(u => u.email.toLowerCase() === cleanEmail);
+    if (!user) {
+      return { success: false, error: 'No account registered with this email. Please request workspace access below.' };
+    }
+
+    if (user.password_hash) {
+      const inputHash = await hashPassword(pass);
+      if (inputHash !== user.password_hash) {
+        return { success: false, error: 'Invalid password. Please check your credentials.' };
+      }
+    }
+
+    if (user.status === 'pending') {
+      return { success: false, error: 'Your rental license is awaiting Super Admin activation.', pending: true, user };
+    }
+
+    if (user.status === 'rejected') {
+      return { success: false, error: 'Your workspace rental license has been suspended.', rejected: true, user };
+    }
+
+    // Approved!
+    authSession.startSession(user);
+    return { success: true, user };
   },
 
   async authenticateSuperAdmin(email: string, pass: string): Promise<boolean> {
@@ -424,7 +545,7 @@ export const userManager = {
         created_at: new Date().toISOString(),
         email_verified: true,
       };
-      userManager.setCurrentUser(admin);
+      authSession.startSession(admin);
       return true;
     }
     return false;
@@ -1065,54 +1186,53 @@ export async function boot(): Promise<Workspace> {
 
   const here = (location.pathname.split('/').pop() || 'index').replace('.html', '') || 'index';
 
-  // 1. Check User Session
-  let user = userManager.getCurrentUser();
-
-  // If no user session, try Supabase session
-  const client = getSupabase();
-  if (!user && client) {
-    try {
-      const { data: { session } } = await client.auth.getSession();
-      if (session?.user) {
-        user = userManager.registerNewUser(session.user.email || '', session.user.user_metadata?.full_name || '');
-        user.email_verified = !!session.user.email_confirmed_at;
-        userManager.setCurrentUser(user);
-      }
-    } catch {}
+  // If on index or login, do not redirect
+  if (here === 'index' || here === 'login') {
+    return { id: '', name: 'Gateway', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // Not signed in at all
-  if (!user) {
-    if (here !== 'index' && here !== 'login') {
-      location.href = 'index.html';
-      return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
-    }
+  // 1. Check Active Authenticated Session (requires password authentication)
+  const session = authSession.getActiveSession();
+  if (!session || !session.userId) {
+    // Loophole closed: Not actively authenticated with password!
+    authSession.endSession();
+    location.href = 'index.html';
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // 2. Check Permission Status: If user is Pending approval, redirect to SaaS auth pending screen!
+  // 2. Fetch User Record from Directory
+  const users = userManager.getUsers();
+  const user = users.find(u => u.id === session.userId || u.email.toLowerCase() === session.email.toLowerCase());
+  if (!user) {
+    authSession.endSession();
+    location.href = 'index.html';
+    return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
+  }
+
+  // 3. Check Permission Status: If user is Pending approval, block from dashboard!
   if (user.status === 'pending') {
-    if (here !== 'index' && here !== 'login') {
-      location.href = 'index.html?pending=1';
-      return { id: '', name: 'Pending Approval', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
-    }
+    location.href = 'index.html?pending=1';
+    return { id: '', name: 'Pending Approval', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // If rejected/suspended
+  // 4. If rejected/suspended, block from dashboard!
   if (user.status === 'rejected') {
-    if (here !== 'index' && here !== 'login') {
-      location.href = 'index.html?suspended=1';
-      return { id: '', name: 'Suspended', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
-    }
+    authSession.endSession();
+    location.href = 'index.html?suspended=1';
+    return { id: '', name: 'Suspended', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // 3. User is Approved: check if they have a workspace
+  // 5. Must be strictly approved
+  if (user.status !== 'approved') {
+    authSession.endSession();
+    location.href = 'index.html';
+    return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
+  }
+
+  // 6. User is Approved: check if they have a workspace
   let ws = db.getCurrentWorkspace();
   if (!ws) {
-    if (here !== 'index' && here !== 'login') {
-      location.href = 'index.html?setup=1';
-      return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
-    }
+    location.href = 'index.html?setup=1';
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 

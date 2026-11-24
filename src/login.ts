@@ -1,13 +1,13 @@
 import {
   db,
   userManager,
+  authSession,
   initTheme,
   toggleTheme,
   toast,
   esc,
   formatDate,
   SUPER_ADMIN_EMAIL,
-  getSupabase,
   clearAllBrowserData,
 } from './core';
 
@@ -27,7 +27,7 @@ if (isClearAction) {
 
 if (isClearedParam) {
   setTimeout(() => {
-    toast('✨ Browser cache and local storage cleared successfully!', 'success');
+    toast('✨ Browser cache and local storage reset to clean slate!', 'success');
   }, 200);
 }
 
@@ -41,8 +41,11 @@ export const renderAuthPage = () => {
   const app = document.getElementById('app');
   if (!app) return;
 
-  const currentUser = userManager.getCurrentUser();
-  const currentWorkspace = db.getCurrentWorkspace();
+  // STRICT MNC GATEWAY SECURITY:
+  // If user is on index.html without an active session, ensure old lingering localStorage keys do not bypass login!
+  const activeSession = authSession.getActiveSession();
+  const currentUser = activeSession ? userManager.getUsers().find(u => u.id === activeSession.userId || u.email.toLowerCase() === activeSession.email.toLowerCase()) : null;
+  const currentWorkspace = currentUser ? db.getCurrentWorkspace() : null;
 
   // --------------------------------------------------------------------------
   // Top MNC Enterprise Navbar
@@ -146,7 +149,6 @@ export const renderAuthPage = () => {
         <span>·</span>
         <span>Privacy & Data Isolation</span>
         <span>·</span>
-        <!-- Subtle discrete link for platform administration without cluttering the public UI -->
         <a class="saas-admin-discrete-link" href="admin.html" title="Platform Administration">
           🔒 Platform Admin
         </a>
@@ -155,9 +157,9 @@ export const renderAuthPage = () => {
   `;
 
   // --------------------------------------------------------------------------
-  // CASE 1: PENDING RENTAL APPROVAL STATE
+  // CASE 1: PENDING RENTAL APPROVAL STATE (Strictly Gated)
   // --------------------------------------------------------------------------
-  if (currentUser && (currentUser.status === 'pending' || isPendingParam)) {
+  if (isPendingParam) {
     app.innerHTML = `
       ${navbarHtml}
 
@@ -171,7 +173,7 @@ export const renderAuthPage = () => {
             </div>
             <h2 class="saas-auth-title">Rental License Review in Progress</h2>
             <p class="saas-auth-subtitle">
-              Welcome, <b>${esc(currentUser.name || currentUser.email)}</b>. Your workspace rental application has been logged into the platform registry.
+              Your workspace rental application has been logged into the platform registry.
             </p>
           </div>
 
@@ -181,7 +183,7 @@ export const renderAuthPage = () => {
               <div class="stepper-dot done">✓</div>
               <div class="stepper-info">
                 <h4>Application Logged</h4>
-                <p>Registered on ${formatDate(currentUser.created_at)} for <b>${esc(currentUser.business_name || 'Micro-Finance Workspace')}</b></p>
+                <p>Rental registration submitted for verification.</p>
               </div>
             </div>
 
@@ -197,23 +199,18 @@ export const renderAuthPage = () => {
               <div class="stepper-dot pending">3</div>
               <div class="stepper-info">
                 <h4>Workspace Provisioning</h4>
-                <p>Clean slate environment (0 dummy records) will be initialized automatically upon approval.</p>
+                <p>Clean slate business environment (0 dummy records) will be provisioned upon activation.</p>
               </div>
             </div>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
-            <button class="btn btn-primary btn-block" id="btn-recheck-status" type="button" style="padding: 13px; font-size: 14px;">
-              🔄 Refresh Activation Status
+            <a class="btn btn-primary btn-block" href="index.html" style="padding: 13px; font-size: 14px; text-decoration: none;">
+              ← Back to Client Sign In
+            </a>
+            <button class="btn btn-outline" id="btn-clear-pending" type="button" style="font-size: 12px; padding: 8px;">
+              🧹 Clear Session Data
             </button>
-            <div style="display: flex; gap: 10px;">
-              <button class="btn btn-secondary" id="btn-sign-out-pending" type="button" style="flex: 1;">
-                🚪 Sign Out
-              </button>
-              <button class="btn btn-danger" id="btn-clear-pending" type="button" style="flex: 1;">
-                🧹 Reset Session
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -223,39 +220,15 @@ export const renderAuthPage = () => {
 
     bindHeaderActions();
 
-    document.getElementById('btn-recheck-status')?.addEventListener('click', () => {
-      const updated = userManager.getUsers().find(u => u.id === currentUser.id);
-      if (updated && updated.status === 'approved') {
-        userManager.setCurrentUser(updated);
-        toast('🎉 License activated by Super Admin! Starting your workspace...', 'success');
-        setTimeout(() => {
-          const ws = db.getCurrentWorkspace();
-          location.href = ws ? 'dashboard.html' : 'index.html?setup=1';
-        }, 500);
-      } else {
-        toast('Account is still under administrative review. Please contact yathinm316@gmail.com.', 'info');
-      }
-    });
-
-    document.getElementById('btn-sign-out-pending')?.addEventListener('click', async () => {
-      userManager.setCurrentUser(null);
-      const client = getSupabase();
-      if (client) { try { await client.auth.signOut(); } catch {} }
-      toast('Signed out', 'info');
-      renderAuthPage();
-    });
-
     document.getElementById('btn-clear-pending')?.addEventListener('click', () => {
-      if (confirm('Clear local session and return to fresh sign in?')) {
-        clearAllBrowserData(true);
-      }
+      clearAllBrowserData(true);
     });
 
     return;
   }
 
   // --------------------------------------------------------------------------
-  // CASE 2: APPROVED CLIENT - WORKSPACE SETUP (ZERO DUMMY DATA)
+  // CASE 2: ACTIVELY AUTHENTICATED & APPROVED - WORKSPACE SETUP (ZERO DUMMY DATA)
   // --------------------------------------------------------------------------
   if (currentUser && currentUser.status === 'approved' && (!currentWorkspace || isSetupParam)) {
     app.innerHTML = `
@@ -336,10 +309,8 @@ export const renderAuthPage = () => {
       setTimeout(() => location.href = 'dashboard.html', 400);
     });
 
-    document.getElementById('btn-sign-out-setup')?.addEventListener('click', async () => {
-      userManager.setCurrentUser(null);
-      const client = getSupabase();
-      if (client) { try { await client.auth.signOut(); } catch {} }
+    document.getElementById('btn-sign-out-setup')?.addEventListener('click', () => {
+      authSession.endSession();
       renderAuthPage();
     });
 
@@ -347,37 +318,9 @@ export const renderAuthPage = () => {
   }
 
   // --------------------------------------------------------------------------
-  // ACTIVE WORKSPACE SESSION SNIPPET (IF ALREADY LOGGED IN & APPROVED)
-  // --------------------------------------------------------------------------
-  const activeSessionSnippet = (currentUser && currentUser.status === 'approved' && currentWorkspace) ? `
-    <div style="background: var(--card-subtle); border: 2px solid var(--primary); padding: 16px 18px; margin-bottom: 20px; border-radius: var(--radius-md); text-align: left;">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <span style="font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;">
-            ${currentUser.role === 'admin' ? '👑 Platform Super Admin' : '✓ Active Business Workspace'}
-          </span>
-          <h3 style="font-size: 18px; font-weight: 800; color: var(--tx); margin: 2px 0;">${esc(currentWorkspace.name)}</h3>
-          <span style="font-size: 12.5px; color: var(--mu);">Logged in as: <b>${esc(currentUser.email)}</b></span>
-        </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          ${currentUser.role === 'admin' ? `
-            <a class="btn btn-secondary" href="admin.html" style="font-size: 12.5px; padding: 8px 14px; color: var(--warning); border-color: var(--warning);">
-              👑 Admin Panel
-            </a>
-          ` : ''}
-          <a class="btn btn-primary" href="dashboard.html" style="font-size: 12.5px; padding: 8px 16px;">
-            🚀 Open Dashboard →
-          </a>
-          <button class="btn btn-secondary" id="btn-session-signout" type="button" style="font-size: 12.5px; padding: 8px 12px;">
-            Sign Out
-          </button>
-        </div>
-      </div>
-    </div>
-  ` : '';
-
-  // --------------------------------------------------------------------------
-  // CASE 3: STANDARD MNC AUTH GATEWAY (ONLY 2 VISIBLE TABS: SIGN IN & REGISTER)
+  // CASE 3: STANDARD CLEAN MNC AUTH GATEWAY
+  // NO PERSISTENT BYPASS CARD, NO ADMIN PANEL BUTTON!
+  // Requires explicit Email & Password to enter!
   // --------------------------------------------------------------------------
   app.innerHTML = `
     ${navbarHtml}
@@ -386,8 +329,6 @@ export const renderAuthPage = () => {
       ${leftHeroHtml}
 
       <div class="saas-auth-card">
-        ${activeSessionSnippet}
-
         <div class="saas-auth-header">
           <h2 class="saas-auth-title">Workspace Portal</h2>
           <p class="saas-auth-subtitle">Sign in to your rented workspace or request an enterprise rental license.</p>
@@ -467,15 +408,6 @@ export const renderAuthPage = () => {
 
   bindHeaderActions();
 
-  // Bind active session signout
-  document.getElementById('btn-session-signout')?.addEventListener('click', async () => {
-    userManager.setCurrentUser(null);
-    const client = getSupabase();
-    if (client) { try { await client.auth.signOut(); } catch {} }
-    toast('Signed out from workspace', 'info');
-    renderAuthPage();
-  });
-
   // Tab toggling
   const tabSignIn = document.getElementById('tab-signin');
   const tabSignUp = document.getElementById('tab-signup');
@@ -496,7 +428,7 @@ export const renderAuthPage = () => {
     if (formSignUp) formSignUp.style.display = 'flex';
   });
 
-  // Handle Client Sign In (with Smart Super Admin Detection!)
+  // Handle Client Sign In (with Smart Super Admin Detection & Password Verification!)
   document.getElementById('btn-signin')?.addEventListener('click', async () => {
     const email = (document.getElementById('si-email') as HTMLInputElement).value.trim().toLowerCase();
     const pass = (document.getElementById('si-pass') as HTMLInputElement).value;
@@ -506,49 +438,32 @@ export const renderAuthPage = () => {
       return;
     }
 
-    // Smart Super Admin Detection:
-    // If Super Admin enters their email, authenticates with master password and directs to admin.html
-    if (email === SUPER_ADMIN_EMAIL.toLowerCase()) {
-      const isAdminValid = await userManager.authenticateSuperAdmin(email, pass);
-      if (isAdminValid) {
-        toast(`Authenticated Super Admin (${SUPER_ADMIN_EMAIL})`, 'success');
-        setTimeout(() => location.href = 'admin.html', 400);
-        return;
-      } else {
-        toast('Invalid administrator password', 'error');
+    // Authenticate credentials through core security engine
+    const authRes = await userManager.verifyCredentials(email, pass);
+
+    if (!authRes.success) {
+      if (authRes.pending) {
+        toast('Your rental license is pending Super Admin activation.', 'info');
+        setTimeout(() => {
+          location.href = 'index.html?pending=1';
+        }, 300);
         return;
       }
-    }
-
-    // Try Supabase auth if online
-    const client = getSupabase();
-    if (client) {
-      try {
-        await client.auth.signInWithPassword({ email, password: pass });
-      } catch {}
-    }
-
-    // Check user in directory
-    const user = userManager.getUsers().find(u => u.email.toLowerCase() === email);
-    if (!user) {
-      toast('No account registered with this email. Please click "Request Workspace Access".', 'error');
+      toast(authRes.error || 'Authentication failed. Please verify your credentials.', 'error');
       return;
     }
 
-    userManager.setCurrentUser(user);
+    // Success!
+    const user = authRes.user!;
 
-    if (user.status === 'pending') {
-      toast('Your rental license is pending Super Admin review.', 'info');
-      renderAuthPage();
+    // Super Admin redirect
+    if (user.role === 'admin' && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+      toast(`Authenticated Super Admin (${SUPER_ADMIN_EMAIL})`, 'success');
+      setTimeout(() => location.href = 'admin.html', 400);
       return;
     }
 
-    if (user.status === 'rejected') {
-      toast('Your workspace rental access is currently suspended. Please contact administrator.', 'error');
-      return;
-    }
-
-    // User is approved!
+    // Client redirect
     toast(`Welcome back, ${user.name}!`, 'success');
     const ws = db.getCurrentWorkspace();
     setTimeout(() => {
@@ -574,24 +489,19 @@ export const renderAuthPage = () => {
       return;
     }
 
-    // Try Supabase Auth signup if available
-    const client = getSupabase();
-    if (client) {
-      try {
-        await client.auth.signUp({
-          email,
-          password: pass,
-          options: { data: { full_name: name, phone, business_name: biz } },
-        });
-      } catch {}
+    const existing = userManager.getUsers().find(u => u.email.toLowerCase() === email);
+    if (existing) {
+      toast('An account with this email already exists. Please sign in.', 'error');
+      return;
     }
 
-    // Save with strictly pending status
-    const user = userManager.registerNewUser(email, name, phone, biz);
-    userManager.setCurrentUser(user);
+    // Save with strictly pending status and cryptographic password hash
+    await userManager.registerNewUser(email, name, phone, biz, pass);
 
     toast('Workspace request logged! Awaiting Super Admin rental activation.', 'info');
-    renderAuthPage();
+    setTimeout(() => {
+      location.href = 'index.html?pending=1';
+    }, 400);
   });
 
   // Purge Storage Button

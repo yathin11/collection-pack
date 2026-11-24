@@ -1,6 +1,7 @@
 import {
   initTheme,
   userManager,
+  authSession,
   db,
   toast,
   esc,
@@ -378,7 +379,7 @@ const renderAdminPortal = () => {
 
   // Admin sign out
   document.getElementById('btn-admin-signout')?.addEventListener('click', () => {
-    userManager.setCurrentUser(null);
+    authSession.endSession();
     toast('Admin signed out', 'info');
     renderAdminPortal();
   });
