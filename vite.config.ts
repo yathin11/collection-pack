@@ -1,4 +1,4 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-const pages = ['index', 'login', 'today', 'plan', 'route', 'customers', 'ledger', 'settings'];
+const pages = ['index', 'login', 'admin', 'today', 'plan', 'route', 'customers', 'ledger', 'settings'];
 export default defineConfig({ build: { rollupOptions: { input: Object.fromEntries(pages.map(p => [p, resolve(__dirname, p + '.html')])) } } });
