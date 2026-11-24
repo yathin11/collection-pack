@@ -49,13 +49,13 @@ import {
 
       app.innerHTML = `
         ${data.customers.length === 0 ? `
-          <div class="card" style="border: 2px dashed var(--primary); background: var(--card); padding: 24px; text-align: center; margin-bottom: 16px;">
-            <div style="font-size: 36px; margin-bottom: 8px;">✨</div>
-            <h3 style="font-size: 18px; font-weight: 800; color: var(--tx);">Clean Workspace Ready</h3>
-            <p style="font-size: 13px; color: var(--mu); margin: 6px auto 16px; max-width: 480px;">
-              Your business workspace is set up with a 100% clean slate (zero dummy records). Click below to register your first customer and issue a loan.
+          <div class="card" style="border: 2px dashed var(--primary); background: var(--card); padding: 28px 20px; text-align: center; margin-bottom: 20px; border-radius: var(--radius-lg);">
+            <div style="font-size: 40px; margin-bottom: 10px;">✨</div>
+            <h3 style="font-size: 20px; font-weight: 800; color: var(--tx); letter-spacing: -0.02em;">Clean Workspace Ready</h3>
+            <p style="font-size: 13.5px; color: var(--mu); margin: 6px auto 18px; max-width: 480px; line-height: 1.5;">
+              Your business workspace is provisioned with a 100% clean slate (zero dummy records). Click below to register your first borrower and issue a loan.
             </p>
-            <a class="btn btn-primary" href="customers.html" style="font-size: 14px; padding: 10px 22px;">
+            <a class="btn btn-primary" href="customers.html" style="font-size: 14px; padding: 11px 24px;">
               ＋ Register First Customer & Issue Loan
             </a>
           </div>

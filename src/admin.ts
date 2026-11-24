@@ -22,26 +22,34 @@ const renderAdminPortal = () => {
   // 1. Private Super Admin Authentication Gate
   if (!isSuperAdmin) {
     app.innerHTML = `
-      <div class="onboard-container">
-        <div class="onboard-card" style="border-top: 4px solid var(--primary);">
-          <div class="onboard-icon-large" style="background: linear-gradient(135deg, var(--primary) 0%, #312e81 100%);">👑</div>
-          <h1 class="onboard-title">Super Admin Portal</h1>
-          <p class="onboard-desc">
-            Private management portal for client rental licensing, tenant approvals, and multi-tenant oversight.
-          </p>
+      <div style="max-width: 460px; margin: 60px auto 0;">
+        <div class="saas-auth-card" style="border-top: 4px solid var(--warning);">
+          <div class="saas-auth-header">
+            <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
+              👑
+            </div>
+            <h2 class="saas-auth-title">Platform Administration</h2>
+            <p class="saas-auth-subtitle">
+              Restricted management console for tenant rental licensing, account activations, and platform oversight.
+            </p>
+          </div>
 
           <form id="admin-login-form" onsubmit="return false;">
-            <label for="adm-email">Super Admin Email</label>
-            <input id="adm-email" type="email" value="${SUPER_ADMIN_EMAIL}" required autofocus>
+            <div>
+              <label for="adm-email">Super Admin Email</label>
+              <input id="adm-email" type="email" value="${SUPER_ADMIN_EMAIL}" required autofocus readonly style="opacity: 0.85;">
+            </div>
 
-            <label for="adm-pass">Master Password</label>
-            <input id="adm-pass" type="password" placeholder="••••••••" required autocomplete="current-password">
+            <div>
+              <label for="adm-pass">Master Password</label>
+              <input id="adm-pass" type="password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
 
-            <button class="btn btn-primary btn-block" id="btn-admin-login" type="button" style="margin-top: 18px; font-size: 15px; padding: 13px;">
-              🔓 Sign In as Super Admin
+            <button class="btn btn-primary btn-block" id="btn-admin-login" type="button" style="margin-top: 10px; font-size: 14.5px; padding: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+              🔓 Authenticate Administrator
             </button>
-            <a class="btn btn-secondary btn-block" href="index.html" style="margin-top: 10px; font-size: 13px;">
-              ← Back to SaaS Gateway
+            <a class="btn btn-secondary btn-block" href="index.html" style="font-size: 13px;">
+              ← Return to Enterprise Gateway
             </a>
           </form>
         </div>
