@@ -303,18 +303,19 @@ export const authSession = {
       token: 'sess_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
       authenticatedAt: Date.now(),
     };
+    localStorage.setItem('cm_auth_session', JSON.stringify(session));
     sessionStorage.setItem('cm_auth_session', JSON.stringify(session));
     localStorage.setItem(LS_KEYS.CURRENT_USER, JSON.stringify(user));
     return session;
   },
 
   getActiveSession(): ActiveSession | null {
-    const raw = sessionStorage.getItem('cm_auth_session');
+    const raw = localStorage.getItem('cm_auth_session') || sessionStorage.getItem('cm_auth_session');
     if (!raw) return null;
     try {
       const sess: ActiveSession = JSON.parse(raw);
-      // Valid for 24 hours of active browser session
-      if (Date.now() - sess.authenticatedAt > 86400000) {
+      // Valid for 30 days of persistent mobile & desktop session
+      if (Date.now() - sess.authenticatedAt > 30 * 86400000) {
         authSession.endSession();
         return null;
       }
@@ -325,6 +326,7 @@ export const authSession = {
   },
 
   endSession() {
+    localStorage.removeItem('cm_auth_session');
     sessionStorage.removeItem('cm_auth_session');
     localStorage.removeItem(LS_KEYS.CURRENT_USER);
     localStorage.removeItem(LS_KEYS.CURRENT_WORKSPACE);
@@ -1164,13 +1166,22 @@ export async function restoreWorkspaceFromCloud(): Promise<{ success: boolean; m
 // -------------------------------------------------------------
 // App Bootstrapper & Navigation
 // -------------------------------------------------------------
-const NAV_ITEMS: [string, string, string][] = [
-  ['dashboard', '📊', 'Home'],
-  ['today', '✅', 'Today'],
-  ['route', '🧭', 'Route'],
-  ['customers', '👥', 'Customers'],
-  ['ledger', '📒', 'Ledger'],
-  ['settings', '⚙️', 'Settings'],
+const NAV_SVGS: Record<string, string> = {
+  dashboard: `<svg class="nav-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  today: `<svg class="nav-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="m9 16 2 2 4-4"/></svg>`,
+  route: `<svg class="nav-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
+  customers: `<svg class="nav-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  ledger: `<svg class="nav-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/><path d="M6 14h6"/></svg>`,
+  settings: `<svg class="nav-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+};
+
+const NAV_ITEMS: [string, string][] = [
+  ['dashboard', 'Home'],
+  ['today', 'Today'],
+  ['route', 'Route'],
+  ['customers', 'Customers'],
+  ['ledger', 'Ledger'],
+  ['settings', 'Settings'],
 ];
 
 export async function boot(): Promise<Workspace> {
@@ -1263,9 +1274,9 @@ export async function boot(): Promise<Workspace> {
         </div>
       </div>
       <nav class="header-nav">
-        ${NAV_ITEMS.map(([h, icon, title]) => `
+        ${NAV_ITEMS.map(([h, title]) => `
           <a href="${h}.html" class="header-nav-item ${h === hh ? 'active' : ''}">
-            <span class="header-nav-icon">${icon}</span>
+            <span class="header-nav-icon">${NAV_SVGS[h] || ''}</span>
             <span class="header-nav-label">${title}</span>
           </a>
         `).join('')}
@@ -1273,15 +1284,16 @@ export async function boot(): Promise<Workspace> {
 
       <div class="header-actions">
         ${isAdmin ? `
-          <a class="btn btn-outline" href="admin.html" style="font-size: 11px; padding: 5px 10px; color: #f59e0b; border-color: #f59e0b; text-decoration: none; font-weight: 700;">
-            👑 Admin Panel
+          <a class="btn btn-outline" href="admin.html" style="font-size: 11px; padding: 5px 9px; color: #f59e0b; border-color: #f59e0b; text-decoration: none; font-weight: 700;">
+            👑 Admin
           </a>
         ` : ''}
         <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme" type="button">
           ${document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️'}
         </button>
         <button class="btn btn-secondary" id="btn-top-logout" style="font-size: 12px; padding: 6px 12px;" type="button" title="Sign Out of Business Workspace">
-          🚪 Sign Out
+          <span class="btn-text-desktop">🚪 Sign Out</span>
+          <span class="btn-text-mobile" style="display: none;">🚪</span>
         </button>
       </div>
     </header>
@@ -1289,9 +1301,9 @@ export async function boot(): Promise<Workspace> {
 
   const navHtml = `
     <nav class="bottom-nav">
-      ${NAV_ITEMS.map(([h, icon, title]) => `
+      ${NAV_ITEMS.map(([h, title]) => `
         <a href="${h}.html" class="nav-item ${h === hh ? 'active' : ''}">
-          <span class="nav-icon">${icon}</span>
+          <div class="nav-icon-wrap">${NAV_SVGS[h] || ''}</div>
           <span class="nav-label">${title}</span>
         </a>
       `).join('')}
@@ -1365,13 +1377,13 @@ export async function load(on = today()) {
       const inst = Number(l.inst);
       const s = stepOf(l);
       const days = dd(l.start_date, on);
-      const k = Math.max(0, Math.min(l.n, Math.floor(days / s)));
+      const k = days >= 0 ? Math.min(l.n, Math.floor(days / s) + 1) : 0;
       const p = paid.get(l.id) || 0;
       const cleared = total - p <= 0.5;
       const outstanding = cleared ? 0 : total - p;
       const targetSoFar = Math.min(total, k * inst);
       const pending = Math.min(outstanding, Math.max(0, targetSoFar - p));
-      const dueToday = days > 0 && days % s === 0 && days / s <= l.n;
+      const dueToday = days >= 0 && days % s === 0 && (days / s) < l.n;
       const pOn = paidOn.get(l.id) || 0;
       const isPastEnd = on > endDate(l);
       const risk = outstanding > 0 && (isPastEnd || pending >= 3 * inst);

@@ -429,7 +429,7 @@ export const renderAuthPage = () => {
   });
 
   // Handle Client Sign In (with Smart Super Admin Detection & Password Verification!)
-  document.getElementById('btn-signin')?.addEventListener('click', async () => {
+  const handleSignIn = async () => {
     const email = (document.getElementById('si-email') as HTMLInputElement).value.trim().toLowerCase();
     const pass = (document.getElementById('si-pass') as HTMLInputElement).value;
 
@@ -459,20 +459,47 @@ export const renderAuthPage = () => {
     // Super Admin redirect
     if (user.role === 'admin' && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
       toast(`Authenticated Super Admin (${SUPER_ADMIN_EMAIL})`, 'success');
-      setTimeout(() => location.href = 'admin.html', 400);
+      setTimeout(() => location.href = 'admin.html', 300);
       return;
     }
 
-    // Client redirect
-    toast(`Welcome back, ${user.name}!`, 'success');
-    const ws = db.getCurrentWorkspace();
-    setTimeout(() => {
-      location.href = ws ? 'dashboard.html' : 'index.html?setup=1';
-    }, 300);
+    // Client redirect: connect workspace directly
+    const allWorkspaces = db.getWorkspaces();
+    let ws = allWorkspaces.find(w => w.owner_id === user.id || w.owner_email?.toLowerCase() === user.email.toLowerCase());
+    if (!ws && user.workspace_id) {
+      ws = allWorkspaces.find(w => w.id === user.workspace_id);
+    }
+    if (!ws && user.business_name) {
+      ws = db.createFreshWorkspace(user.business_name, user.id, user.email);
+    }
+
+    if (ws) {
+      db.setCurrentWorkspace(ws);
+      toast(`Welcome back, ${user.name}! Opening ${ws.name}...`, 'success');
+      setTimeout(() => {
+        location.href = 'dashboard.html';
+      }, 300);
+    } else {
+      setTimeout(() => {
+        location.href = 'index.html?setup=1';
+      }, 300);
+    }
+  };
+
+  document.getElementById('btn-signin')?.addEventListener('click', handleSignIn);
+  document.getElementById('signin-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleSignIn();
+  });
+  document.getElementById('si-pass')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSignIn();
+    }
   });
 
   // Handle Request Rental License (Sign Up)
-  document.getElementById('btn-signup')?.addEventListener('click', async () => {
+  const handleSignUp = async () => {
     const name = (document.getElementById('su-name') as HTMLInputElement).value.trim();
     const biz = (document.getElementById('su-biz') as HTMLInputElement).value.trim();
     const phone = (document.getElementById('su-phone') as HTMLInputElement).value.trim();
@@ -502,6 +529,18 @@ export const renderAuthPage = () => {
     setTimeout(() => {
       location.href = 'index.html?pending=1';
     }, 400);
+  };
+
+  document.getElementById('btn-signup')?.addEventListener('click', handleSignUp);
+  document.getElementById('signup-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleSignUp();
+  });
+  document.getElementById('su-pass')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSignUp();
+    }
   });
 
   // Purge Storage Button

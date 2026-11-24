@@ -57,7 +57,7 @@ const renderAdminPortal = () => {
       </div>
     `;
 
-    document.getElementById('btn-admin-login')?.addEventListener('click', async () => {
+    const handleAdminLogin = async () => {
       const email = (document.getElementById('adm-email') as HTMLInputElement).value.trim();
       const pass = (document.getElementById('adm-pass') as HTMLInputElement).value;
 
@@ -72,6 +72,18 @@ const renderAdminPortal = () => {
         renderAdminPortal();
       } else {
         toast('Invalid Super Admin credentials.', 'error');
+      }
+    };
+
+    document.getElementById('btn-admin-login')?.addEventListener('click', handleAdminLogin);
+    document.getElementById('admin-login-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleAdminLogin();
+    });
+    document.getElementById('adm-pass')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAdminLogin();
       }
     });
     return;
