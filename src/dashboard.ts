@@ -153,7 +153,9 @@ import {
           </div>
           ${list.length > 0
             ? list.slice(0, 5).map(r => rowHtml(r, pl.has(r.l.id))).join('')
-            : '<div style="text-align: center; padding: 24px 0; color: var(--mu);">No scheduled collections for today. Use <a href="plan.html" style="color:var(--primary); font-weight:600;">Plan day</a> to schedule customers!</div>'
+            : (rows.length === 0
+              ? '<div style="text-align: center; padding: 20px 0; color: var(--mu);">No active loans yet. <a href="customers.html" style="color:var(--primary); font-weight:600;">Add your first customer & loan</a> to start collecting.</div>'
+              : '<div style="text-align: center; padding: 20px 0; color: var(--mu);">No scheduled collections for today. Use <a href="plan.html" style="color:var(--primary); font-weight:600;">Plan day</a> to schedule stops.</div>')
           }
         </div>
 

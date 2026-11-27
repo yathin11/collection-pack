@@ -7,6 +7,10 @@ import { boot, load, money, esc, endDate, $, Row, toast } from './core';
 
     let area = '';
     const sel = new Set<string>();
+    const preselectCid = new URLSearchParams(location.search).get('c');
+    if (preselectCid && customers.some(c => c.id === preselectCid)) {
+      sel.add(preselectCid);
+    }
     const areas = [...new Set(customers.map(c => (c.area || '').trim()).filter(Boolean))];
 
     const draw = () => {

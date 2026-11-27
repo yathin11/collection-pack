@@ -23,19 +23,19 @@ import {
     const modes = [
       org.daily_on ? '<option value="daily">Daily Collection</option>' : '',
       org.weekly_on ? '<option value="weekly">Weekly Collection</option>' : '',
-    ].filter(Boolean).join('');
+    ].filter(Boolean).join('') || '<option value="daily">Daily Collection</option>';
 
-    const areas = [...new Set(['Ernakulam', 'Thrissur', 'Kochi', 'Aluva', ...customers.map((c: any) => c.area)].filter(Boolean))];
+    const areas = [...new Set(customers.map((c: any) => c.area).filter(Boolean))];
 
     const app = $('#app');
     if (!app) return;
 
     app.innerHTML = `
       <!-- Add Customer / Loan Form Accordion -->
-      <details class="card" id="form-details">
+      <details class="card" id="form-details" ${customers.length === 0 ? 'open' : ''}>
         <summary style="font-size: 16px; font-weight: 700; color: var(--tx); cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
           <span>＋ Issue New Loan / Add Customer</span>
-          <span style="font-size: 12px; font-weight: 600; color: var(--primary);">Tap to open/close</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--primary);">Tap to toggle</span>
         </summary>
 
         <div style="margin-top: 16px; border-top: 1px solid var(--card-border); padding-top: 14px;">
@@ -43,7 +43,7 @@ import {
           <label for="ex">Customer Selection</label>
           <select id="ex">
             <option value="">＋ Create New Customer Profile</option>
-            ${customers.map(c => `<option value="${c.id}">${esc(c.name)} · 📞 ${esc(c.phone)} (${esc(c.village || c.area || '')})</option>`).join('')}
+            ${customers.map(c => `<option value="${c.id}">${esc(c.name)} · 📞 ${esc(c.phone)}${c.village || c.area ? ` (${esc(c.village || c.area)})` : ''}</option>`).join('')}
           </select>
 
           <!-- New Customer Details Section -->
@@ -62,14 +62,14 @@ import {
             <div class="form-row form-row-2">
               <div>
                 <label for="ar">District / Area</label>
-                <input id="ar" list="area-list" placeholder="e.g. Ernakulam, Thrissur">
+                <input id="ar" list="area-list" placeholder="e.g. City / District">
                 <datalist id="area-list">
                   ${areas.map(a => `<option value="${esc(a)}">`).join('')}
                 </datalist>
               </div>
               <div>
                 <label for="vi">Village / Locality</label>
-                <input id="vi" placeholder="e.g. Kakkanad, Chalakudy">
+                <input id="vi" placeholder="e.g. Market Road / Sector">
               </div>
             </div>
 
@@ -255,7 +255,7 @@ import {
                   </div>
                   <div class="collect-meta">
                     <span>📞 ${esc(r.c.phone)}</span>
-                    <span>📍 ${esc([r.c.village, r.c.area].filter(Boolean).join(', '))}</span>
+                    <span>📍 ${esc([r.c.village, r.c.area].filter(Boolean).join(', ') || 'No area set')}</span>
                   </div>
                 </div>
                 <div class="balance-badge">
@@ -280,7 +280,7 @@ import {
               <div class="action-links" style="margin-top: 12px;">
                 ${r.c.phone ? `<a class="action-chip" href="tel:${esc(r.c.phone)}">📞 Call</a>` : ''}
                 ${r.c.phone ? `<a class="action-chip" href="https://wa.me/91${esc(r.c.phone).replace(/\D/g,'').slice(-10)}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
-                <a class="action-chip" href="ledger.html">📒 Ledger</a>
+                <a class="action-chip" href="ledger.html?c=${r.c.id}">📒 Ledger</a>
                 <button class="action-chip btn-danger" data-del="${r.l.id}" type="button" style="margin-left: auto;">
                   🗑️ Delete Loan
                 </button>

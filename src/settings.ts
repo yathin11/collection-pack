@@ -16,7 +16,6 @@ import {
   load,
   esc,
   formatDate,
-  SUPER_ADMIN_EMAIL,
   clearAllBrowserData,
 } from './core';
 
@@ -180,15 +179,13 @@ const csv = (r: any[]) => {
         </div>
       </div>
 
-      <!-- Account & Super Admin Link -->
+      <!-- Account & License -->
       <div class="card">
         <div class="card-title-row">
           <div>
-            <h2 class="card-title">👤 User Account & License</h2>
+            <h2 class="card-title">👤 Business Account & Session</h2>
           </div>
-          <span class="badge ${curUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? 'badge-local' : 'tag-mode'}">
-            ${curUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? '👑 Super Admin' : '👔 Rented Workspace Owner'}
-          </span>
+          <span class="badge tag-mode">👔 Workspace Owner</span>
         </div>
 
         <p style="font-size: 13px; color: var(--tx);">
@@ -196,15 +193,10 @@ const csv = (r: any[]) => {
         </p>
 
         <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
-          ${curUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? `
-            <a class="btn btn-primary" href="admin.html" style="flex: 1;">
-              👑 Open Super Admin Portal
-            </a>
-          ` : ''}
-          <button class="btn btn-secondary" id="btn-logout" type="button" style="flex: 1;">
+          <button class="btn btn-secondary" id="btn-logout" type="button" style="flex: 1 1 150px;">
             🚪 Sign Out
           </button>
-          <button class="btn btn-danger" id="btn-clear-cache" type="button" style="flex: 1;">
+          <button class="btn btn-danger" id="btn-clear-cache" type="button" style="flex: 1 1 150px;">
             🧹 Clear Cache & Reset App
           </button>
         </div>
@@ -247,16 +239,19 @@ const csv = (r: any[]) => {
 
     // Download CSVs
     document.getElementById('btn-dl-csv-cust')?.addEventListener('click', () => {
+      if (!customers.length) { toast('No customers to export yet', 'info'); return; }
       saveCsv(`customers_${stamp()}.csv`, csv(customers));
       toast('Customers CSV exported', 'success');
     });
 
     document.getElementById('btn-dl-csv-loans')?.addEventListener('click', () => {
+      if (!loans.length) { toast('No loans to export yet', 'info'); return; }
       saveCsv(`loans_${stamp()}.csv`, csv(loans));
       toast('Loans CSV exported', 'success');
     });
 
     document.getElementById('btn-dl-csv-payments')?.addEventListener('click', () => {
+      if (!payments.length) { toast('No payment records to export yet', 'info'); return; }
       saveCsv(`payments_${stamp()}.csv`, csv(payments));
       toast('Payments CSV exported', 'success');
     });

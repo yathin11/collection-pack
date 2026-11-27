@@ -6,7 +6,6 @@ import {
   toggleTheme,
   toast,
   esc,
-  formatDate,
   SUPER_ADMIN_EMAIL,
   clearAllBrowserData,
 } from './core';
@@ -41,14 +40,19 @@ export const renderAuthPage = () => {
   const app = document.getElementById('app');
   if (!app) return;
 
-  // STRICT MNC GATEWAY SECURITY:
-  // If user is on index.html without an active session, ensure old lingering localStorage keys do not bypass login!
+  // STRICT GATEWAY SECURITY:
+  // Only enter dashboard automatically if an authenticated, approved client session + workspace exists
   const activeSession = authSession.getActiveSession();
   const currentUser = activeSession ? userManager.getUsers().find(u => u.id === activeSession.userId || u.email.toLowerCase() === activeSession.email.toLowerCase()) : null;
-  const currentWorkspace = currentUser ? db.getCurrentWorkspace() : null;
+  const currentWorkspace = (currentUser && currentUser.role !== 'admin') ? db.getCurrentWorkspace() : null;
+
+  if (!isPendingParam && !isSetupParam && !isSuspendedParam && !isClearedParam && currentUser && currentUser.role !== 'admin' && currentUser.status === 'approved' && currentWorkspace) {
+    location.href = 'dashboard.html';
+    return;
+  }
 
   // --------------------------------------------------------------------------
-  // Top MNC Enterprise Navbar
+  // Top Minimal Corporate Navbar (Strictly Client-Facing)
   // --------------------------------------------------------------------------
   const navbarHtml = `
     <header class="enterprise-navbar">
@@ -56,19 +60,16 @@ export const renderAuthPage = () => {
         <div class="enterprise-logo-icon">💼</div>
         <div>
           <div class="enterprise-brand-title">Collection Manager</div>
-          <div class="enterprise-brand-subtitle">Enterprise Micro-Finance Platform</div>
+          <div class="enterprise-brand-subtitle">Enterprise Finance Operations</div>
         </div>
       </div>
       <div class="enterprise-nav-actions">
         <div class="live-status-pill">
           <span class="live-pulse-dot"></span>
-          <span>99.99% Uptime · Operational</span>
+          <span>Operational</span>
         </div>
         <button class="theme-btn" id="theme-toggle-btn" title="Toggle Theme" type="button">
           ${document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️'}
-        </button>
-        <button class="btn btn-outline" id="btn-header-clear-cache" type="button" title="Purge Local Cache & Reset State" style="font-size: 12px; padding: 7px 12px;">
-          🧹 Reset Cache
         </button>
       </div>
     </header>
@@ -80,7 +81,7 @@ export const renderAuthPage = () => {
   const leftHeroHtml = `
     <div class="saas-hero-left">
       <div class="hero-pill-badge">
-        <span>🚀 Version 2.4 Enterprise Release · Dual Cloud & Offline Engine</span>
+        <span>Version 2.4 · Dual Cloud & Offline Engine</span>
       </div>
 
       <h1 class="hero-main-title">
@@ -88,7 +89,7 @@ export const renderAuthPage = () => {
       </h1>
 
       <p class="hero-main-desc">
-        Designed for micro-lenders, finance enterprises, and collection networks. Automate installment schedules, enforce real-time ledger reconciliation, and eliminate cash leakage with bank-grade field operations.
+        Designed for micro-lenders, finance enterprises, and collection networks. Automate installment schedules, enforce real-time ledger reconciliation, and eliminate cash leakage.
       </p>
 
       <div class="hero-features-list">
@@ -103,8 +104,8 @@ export const renderAuthPage = () => {
         <div class="hero-feature-card">
           <div class="hero-feature-icon">🔒</div>
           <div>
-            <div class="hero-feature-title">Multi-Tenant Cryptographic Isolation</div>
-            <div class="hero-feature-desc">Each business operator operates within a strictly partitioned workspace. Tenant licensing is guarded by administrative approval.</div>
+            <div class="hero-feature-title">Isolated Business Workspaces</div>
+            <div class="hero-feature-desc">Each business operator works inside a dedicated, partitioned workspace with clean financial reconciliation.</div>
           </div>
         </div>
 
@@ -112,7 +113,7 @@ export const renderAuthPage = () => {
           <div class="hero-feature-icon">📊</div>
           <div>
             <div class="hero-feature-title">Multi-Sheet Excel & Cloud Synchronization</div>
-            <div class="hero-feature-desc">One-click multi-sheet workbook generation (SpreadsheetML) and seamless background sync with Supabase cloud infrastructure.</div>
+            <div class="hero-feature-desc">One-click multi-sheet workbook generation (SpreadsheetML) and seamless background sync with cloud infrastructure.</div>
           </div>
         </div>
       </div>
@@ -120,44 +121,40 @@ export const renderAuthPage = () => {
       <div class="hero-metrics-strip">
         <div class="hero-metric-item">
           <span class="hero-metric-num">100%</span>
-          <span class="hero-metric-label">Clean Slate Guarantee</span>
+          <span class="hero-metric-label">Clean Slate Setup</span>
         </div>
         <div class="hero-metric-item">
           <span class="hero-metric-num">256-Bit</span>
-          <span class="hero-metric-label">Secure Audit Trails</span>
+          <span class="hero-metric-label">Secure Isolation</span>
         </div>
         <div class="hero-metric-item">
           <span class="hero-metric-num">0 ms</span>
-          <span class="hero-metric-label">Offline-First Latency</span>
+          <span class="hero-metric-label">Offline Latency</span>
         </div>
       </div>
     </div>
   `;
 
   // --------------------------------------------------------------------------
-  // Enterprise Corporate Footer
+  // Enterprise Corporate Footer (Strictly Client-Facing, Zero Admin Links)
   // --------------------------------------------------------------------------
   const footerHtml = `
     <footer class="saas-footer">
       <div>
-        © 2026 Collection Manager Enterprise SaaS. Bank-Grade Micro-Finance Operations.
+        © 2026 Collection Manager Enterprise SaaS. All rights reserved.
       </div>
       <div class="saas-footer-links">
-        <span>SOC-2 Architecture</span>
+        <span>Encrypted Ledger</span>
         <span>·</span>
-        <span>Cloud Sync SLA</span>
+        <span>Cloud & Offline Ready</span>
         <span>·</span>
-        <span>Privacy & Data Isolation</span>
-        <span>·</span>
-        <a class="saas-admin-discrete-link" href="admin.html" title="Platform Administration">
-          🔒 Platform Admin
-        </a>
+        <span>Tenant Data Isolation</span>
       </div>
     </footer>
   `;
 
   // --------------------------------------------------------------------------
-  // CASE 1: PENDING RENTAL APPROVAL STATE (Strictly Gated)
+  // CASE 1: PENDING ACCESS VERIFICATION (No Admin Email or Reference Exposed)
   // --------------------------------------------------------------------------
   if (isPendingParam) {
     app.innerHTML = `
@@ -171,35 +168,34 @@ export const renderAuthPage = () => {
             <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);">
               ⏳
             </div>
-            <h2 class="saas-auth-title">Rental License Review in Progress</h2>
+            <h2 class="saas-auth-title">Workspace Activation Pending</h2>
             <p class="saas-auth-subtitle">
-              Your workspace rental application has been logged into the platform registry.
+              Your business registration request has been logged and queued for verification.
             </p>
           </div>
 
-          <!-- Enterprise 3-Step Verification Stepper -->
           <div class="status-stepper">
             <div class="stepper-step">
               <div class="stepper-dot done">✓</div>
               <div class="stepper-info">
-                <h4>Application Logged</h4>
-                <p>Rental registration submitted for verification.</p>
+                <h4>Application Submitted</h4>
+                <p>Business workspace request recorded in registry.</p>
               </div>
             </div>
 
             <div class="stepper-step">
               <div class="stepper-dot active">⏳</div>
               <div class="stepper-info">
-                <h4>Super Admin Verification</h4>
-                <p>Under review by Platform Administrator (<b>${esc(SUPER_ADMIN_EMAIL)}</b>). Activation pending.</p>
+                <h4>Account Verification</h4>
+                <p>Under review for license activation. Once activated, sign in with your registered email and password.</p>
               </div>
             </div>
 
             <div class="stepper-step">
               <div class="stepper-dot pending">3</div>
               <div class="stepper-info">
-                <h4>Workspace Provisioning</h4>
-                <p>Clean slate business environment (0 dummy records) will be provisioned upon activation.</p>
+                <h4>Clean Workspace Launch</h4>
+                <p>Your isolated business environment (0 dummy records) will open automatically upon sign-in.</p>
               </div>
             </div>
           </div>
@@ -208,9 +204,6 @@ export const renderAuthPage = () => {
             <a class="btn btn-primary btn-block" href="index.html" style="padding: 13px; font-size: 14px; text-decoration: none;">
               ← Back to Client Sign In
             </a>
-            <button class="btn btn-outline" id="btn-clear-pending" type="button" style="font-size: 12px; padding: 8px;">
-              🧹 Clear Session Data
-            </button>
           </div>
         </div>
       </div>
@@ -219,11 +212,6 @@ export const renderAuthPage = () => {
     `;
 
     bindHeaderActions();
-
-    document.getElementById('btn-clear-pending')?.addEventListener('click', () => {
-      clearAllBrowserData(true);
-    });
-
     return;
   }
 
@@ -443,7 +431,7 @@ export const renderAuthPage = () => {
 
     if (!authRes.success) {
       if (authRes.pending) {
-        toast('Your rental license is pending Super Admin activation.', 'info');
+        toast('Your workspace activation is pending verification.', 'info');
         setTimeout(() => {
           location.href = 'index.html?pending=1';
         }, 300);
@@ -456,10 +444,9 @@ export const renderAuthPage = () => {
     // Success!
     const user = authRes.user!;
 
-    // Super Admin redirect
+    // Silent routing if authorized platform operator signed in
     if (user.role === 'admin' && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
-      toast(`Authenticated Super Admin (${SUPER_ADMIN_EMAIL})`, 'success');
-      setTimeout(() => location.href = 'admin.html', 300);
+      location.href = 'admin.html';
       return;
     }
 
@@ -498,7 +485,7 @@ export const renderAuthPage = () => {
     }
   });
 
-  // Handle Request Rental License (Sign Up)
+  // Handle Request Access (Sign Up)
   const handleSignUp = async () => {
     const name = (document.getElementById('su-name') as HTMLInputElement).value.trim();
     const biz = (document.getElementById('su-biz') as HTMLInputElement).value.trim();
@@ -512,7 +499,7 @@ export const renderAuthPage = () => {
     }
 
     if (email === SUPER_ADMIN_EMAIL.toLowerCase()) {
-      toast('This email is reserved for platform administration.', 'error');
+      toast('Unable to register this email address. Please use another business email.', 'error');
       return;
     }
 
@@ -525,7 +512,7 @@ export const renderAuthPage = () => {
     // Save with strictly pending status and cryptographic password hash
     await userManager.registerNewUser(email, name, phone, biz, pass);
 
-    toast('Workspace request logged! Awaiting Super Admin rental activation.', 'info');
+    toast('Workspace request submitted! Activation pending.', 'info');
     setTimeout(() => {
       location.href = 'index.html?pending=1';
     }, 400);
@@ -556,12 +543,6 @@ function bindHeaderActions() {
     const next = toggleTheme();
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = next === 'light' ? '🌙' : '☀️';
-  });
-
-  document.getElementById('btn-header-clear-cache')?.addEventListener('click', () => {
-    if (confirm('Clear all browser cache and local storage?')) {
-      clearAllBrowserData(true);
-    }
   });
 }
 

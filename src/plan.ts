@@ -64,32 +64,7 @@ async function render() {
     </div>
 
     <!-- Customer Checklist -->
-    <div class="card" style="padding: 0 16px;">
-      ${filtered.length > 0 ? filtered.map(r => {
-        const isChecked = sel.has(r.l.id);
-        const loc = [r.c.village, r.c.area].filter(Boolean).join(', ');
-        return `
-          <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--card-border); cursor: pointer; margin: 0;">
-            <div style="flex: 1; padding-right: 12px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <b style="font-size: 15px; color: var(--tx);">${esc(r.c.name)}</b>
-                <span class="tag tag-mode">${r.l.mode}</span>
-                ${r.pending > Number(r.l.inst) ? `<span class="tag tag-overdue">Overdue</span>` : ''}
-              </div>
-              <div style="font-size: 12px; color: var(--mu); margin-top: 3px;">
-                📍 ${esc(loc || 'No area set')} · Balance: <b style="color:var(--tx);">${money(r.outstanding)}</b> · Due: ${money(r.l.inst)}
-              </div>
-            </div>
-            <input type="checkbox" style="width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer;"
-                   data-id="${r.l.id}" ${isChecked ? 'checked' : ''}>
-          </label>
-        `;
-      }).join('') : `
-        <div style="text-align: center; padding: 32px; color: var(--mu);">
-          No active customers to schedule.
-        </div>
-      `}
-    </div>
+    <div class="card" id="plan-list" style="padding: 0 16px;"></div>
 
     <div style="margin-top: 16px;">
       <a class="btn btn-primary btn-block" href="today.html" style="font-size: 15px; padding: 12px;">
@@ -97,6 +72,56 @@ async function render() {
       </a>
     </div>
   `;
+
+  const renderChecklist = () => {
+    let list = activeLoans;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(r =>
+        (r.c.name + ' ' + r.c.phone + ' ' + (r.c.village || '') + ' ' + (r.c.area || '')).toLowerCase().includes(q)
+      );
+    }
+    const container = document.getElementById('plan-list');
+    if (!container) return;
+    container.innerHTML = list.length > 0 ? list.map(r => {
+      const isChecked = sel.has(r.l.id);
+      const loc = [r.c.village, r.c.area].filter(Boolean).join(', ');
+      return `
+        <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--card-border); cursor: pointer; margin: 0;">
+          <div style="flex: 1; padding-right: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <b style="font-size: 15px; color: var(--tx);">${esc(r.c.name)}</b>
+              <span class="tag tag-mode">${r.l.mode}</span>
+              ${r.pending > Number(r.l.inst) ? `<span class="tag tag-overdue">Overdue</span>` : ''}
+            </div>
+            <div style="font-size: 12px; color: var(--mu); margin-top: 3px;">
+              📍 ${esc(loc || 'No area set')} · Balance: <b style="color:var(--tx);">${money(r.outstanding)}</b> · Due: ${money(r.l.inst)}
+            </div>
+          </div>
+          <input type="checkbox" style="width: 22px; height: 22px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0;"
+                 data-id="${r.l.id}" ${isChecked ? 'checked' : ''}>
+        </label>
+      `;
+    }).join('') : `
+      <div style="text-align: center; padding: 32px; color: var(--mu);">
+        ${activeLoans.length === 0
+          ? 'No active customers yet. <a href="customers.html" style="color:var(--primary); font-weight:600;">Add your first borrower</a> first.'
+          : 'No matching active customers.'}
+      </div>
+    `;
+
+    container.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const el = cb as HTMLInputElement;
+        const loanId = el.dataset.id;
+        if (!loanId) return;
+        db.togglePlanDay(day, loanId);
+        toast(el.checked ? 'Added to schedule' : 'Removed from schedule', 'info');
+        render();
+      });
+    });
+  };
+  renderChecklist();
 
   // Bind date change
   (document.getElementById('plan-date') as HTMLInputElement).onchange = e => {
@@ -114,24 +139,12 @@ async function render() {
     render();
   });
 
-  // Checkbox toggle
-  document.querySelectorAll('#app input[type=checkbox]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const el = cb as HTMLInputElement;
-      const loanId = el.dataset.id;
-      if (!loanId) return;
-      db.togglePlanDay(day, loanId);
-      toast(el.checked ? 'Added to schedule' : 'Removed from schedule', 'info');
-      render();
-    });
-  });
-
-  // Search input
+  // Search input without blurring mobile keyboard
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value;
-      render();
+      renderChecklist();
     });
   }
 

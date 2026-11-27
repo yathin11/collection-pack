@@ -259,6 +259,8 @@ export const LS_KEYS = {
 export function clearAllBrowserData(reload = true) {
   try {
     const keys = [
+      'cm_auth_session',
+      'cm_admin_session',
       'cm_current_user',
       'cm_users_directory',
       'cm_workspaces',
@@ -282,7 +284,7 @@ export function clearAllBrowserData(reload = true) {
 }
 
 // -------------------------------------------------------------
-// Active Authenticated Session Engine (sessionStorage backed)
+// Active Authenticated Session Engines (Strictly Isolated Roles)
 // -------------------------------------------------------------
 export interface ActiveSession {
   userId: string;
@@ -292,6 +294,41 @@ export interface ActiveSession {
   token: string;
   authenticatedAt: number;
 }
+
+export const adminSession = {
+  startAdminSession(): ActiveSession {
+    const session: ActiveSession = {
+      userId: 'user_super_admin',
+      email: SUPER_ADMIN_EMAIL.toLowerCase(),
+      role: 'admin',
+      status: 'approved',
+      token: 'adm_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+      authenticatedAt: Date.now(),
+    };
+    localStorage.setItem('cm_admin_session', JSON.stringify(session));
+    return session;
+  },
+
+  getAdminSession(): ActiveSession | null {
+    const raw = localStorage.getItem('cm_admin_session');
+    if (!raw) return null;
+    try {
+      const sess: ActiveSession = JSON.parse(raw);
+      if (sess.role !== 'admin' || sess.email !== SUPER_ADMIN_EMAIL.toLowerCase()) return null;
+      if (Date.now() - sess.authenticatedAt > 86400000) {
+        adminSession.endAdminSession();
+        return null;
+      }
+      return sess;
+    } catch {
+      return null;
+    }
+  },
+
+  endAdminSession() {
+    localStorage.removeItem('cm_admin_session');
+  },
+};
 
 export const authSession = {
   startSession(user: UserAccount): ActiveSession {
@@ -362,47 +399,16 @@ export const userManager = {
 
   getUsers(): UserAccount[] {
     const raw = localStorage.getItem(LS_KEYS.USERS_DIRECTORY);
-    if (!raw) {
-      const admin: UserAccount = {
-        id: 'user_super_admin',
-        email: SUPER_ADMIN_EMAIL,
-        name: 'Super Admin',
-        business_name: 'Platform Administrator',
-        role: 'admin',
-        status: 'approved',
-        workspace_id: null,
-        created_at: new Date().toISOString(),
-        email_verified: true,
-      };
-      localStorage.setItem(LS_KEYS.USERS_DIRECTORY, JSON.stringify([admin]));
-      return [admin];
-    }
+    if (!raw) return [];
     try {
       const list: UserAccount[] = JSON.parse(raw);
-      // Ensure super admin always exists with admin role
-      const adm = list.find(u => u.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase());
-      if (!adm) {
-        list.unshift({
-          id: 'user_super_admin',
-          email: SUPER_ADMIN_EMAIL,
-          name: 'Super Admin',
-          business_name: 'Platform Administrator',
-          role: 'admin',
-          status: 'approved',
-          workspace_id: null,
-          created_at: new Date().toISOString(),
-          email_verified: true,
-        });
-        localStorage.setItem(LS_KEYS.USERS_DIRECTORY, JSON.stringify(list));
-      } else {
-        adm.role = 'admin';
-        adm.status = 'approved';
-      }
-      return list;
+      // Strictly store/return only client accounts in USERS_DIRECTORY (never persist admin account here)
+      return list.filter(u => u.role !== 'admin' && u.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase());
     } catch { return []; }
   },
 
   saveUser(u: UserAccount): UserAccount {
+    if (u.role === 'admin' || u.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) return u;
     const list = userManager.getUsers();
     const idx = list.findIndex(x => x.id === u.id || x.email.toLowerCase() === u.email.toLowerCase());
     if (idx >= 0) {
@@ -416,7 +422,7 @@ export const userManager = {
     }
   },
 
-  approveUser(userId: string, adminId = 'super_admin'): boolean {
+  approveUser(userId: string, adminId = 'platform_admin'): boolean {
     const list = userManager.getUsers();
     const user = list.find(x => x.id === userId);
     if (!user) return false;
@@ -439,6 +445,7 @@ export const userManager = {
     const sess = authSession.getActiveSession();
     if (sess && sess.userId === userId) {
       sess.status = 'approved';
+      localStorage.setItem('cm_auth_session', JSON.stringify(sess));
       sessionStorage.setItem('cm_auth_session', JSON.stringify(sess));
       localStorage.setItem(LS_KEYS.CURRENT_USER, JSON.stringify(user));
     }
@@ -455,8 +462,14 @@ export const userManager = {
   },
 
   deleteUser(userId: string): boolean {
+    const target = userManager.getUsers().find(x => x.id === userId);
     const list = userManager.getUsers().filter(x => x.id !== userId);
     localStorage.setItem(LS_KEYS.USERS_DIRECTORY, JSON.stringify(list));
+    if (target) {
+      db.getWorkspaces()
+        .filter(w => w.owner_id === target.id || w.owner_email?.toLowerCase() === target.email.toLowerCase())
+        .forEach(w => db.deleteWorkspace(w.id));
+    }
     return true;
   },
 
@@ -467,7 +480,7 @@ export const userManager = {
 
     const passHash = password ? await hashPassword(password) : '';
 
-    // Normal client registrations are ALWAYS pending admin rental approval
+    // Normal client registrations are ALWAYS pending platform approval
     const user: UserAccount = {
       id: uid(),
       email: cleanEmail,
@@ -476,7 +489,7 @@ export const userManager = {
       business_name: business_name.trim() || 'My Collection Business',
       password_hash: passHash,
       role: 'owner',
-      status: 'pending', // Strictly pending! Must be approved by Super Admin in admin.html
+      status: 'pending',
       workspace_id: null,
       created_at: new Date().toISOString(),
       email_verified: false,
@@ -487,48 +500,49 @@ export const userManager = {
   async verifyCredentials(email: string, pass: string): Promise<{ success: boolean; error?: string; user?: UserAccount; pending?: boolean; rejected?: boolean }> {
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if Super Admin
+    // Silent check if Platform Admin credentials entered
     if (cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase()) {
       const ok = await verifyAdminPassword(pass);
       if (ok) {
         const admin: UserAccount = {
           id: 'user_super_admin',
           email: SUPER_ADMIN_EMAIL,
-          name: 'Super Admin',
+          name: 'Platform Admin',
           role: 'admin',
           status: 'approved',
           workspace_id: null,
           created_at: new Date().toISOString(),
           email_verified: true,
         };
-        authSession.startSession(admin);
+        adminSession.startAdminSession();
         return { success: true, user: admin };
       }
-      return { success: false, error: 'Invalid Super Admin password.' };
+      // Generic message: never confirm admin email existence
+      return { success: false, error: 'Invalid email or password. Please verify your credentials.' };
     }
 
     // Check Client
     const user = userManager.getUsers().find(u => u.email.toLowerCase() === cleanEmail);
     if (!user) {
-      return { success: false, error: 'No account registered with this email. Please request workspace access below.' };
+      return { success: false, error: 'No account registered with this email. Please request workspace access.' };
     }
 
     if (user.password_hash) {
       const inputHash = await hashPassword(pass);
       if (inputHash !== user.password_hash) {
-        return { success: false, error: 'Invalid password. Please check your credentials.' };
+        return { success: false, error: 'Invalid email or password. Please verify your credentials.' };
       }
     }
 
     if (user.status === 'pending') {
-      return { success: false, error: 'Your rental license is awaiting Super Admin activation.', pending: true, user };
+      return { success: false, error: 'Your workspace activation is currently pending verification.', pending: true, user };
     }
 
     if (user.status === 'rejected') {
-      return { success: false, error: 'Your workspace rental license has been suspended.', rejected: true, user };
+      return { success: false, error: 'Your workspace access has been suspended. Please contact support.', rejected: true, user };
     }
 
-    // Approved!
+    // Approved client!
     authSession.startSession(user);
     return { success: true, user };
   },
@@ -537,17 +551,7 @@ export const userManager = {
     if (email.trim().toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) return false;
     const ok = await verifyAdminPassword(pass);
     if (ok) {
-      const admin: UserAccount = {
-        id: 'user_super_admin',
-        email: SUPER_ADMIN_EMAIL,
-        name: 'Super Admin',
-        role: 'admin',
-        status: 'approved',
-        workspace_id: null,
-        created_at: new Date().toISOString(),
-        email_verified: true,
-      };
-      authSession.startSession(admin);
+      adminSession.startAdminSession();
       return true;
     }
     return false;
@@ -578,27 +582,48 @@ export const db = {
     }
   },
 
+  deleteWorkspace(wsId: string) {
+    const workspaces = db.getWorkspaces().filter(w => w.id !== wsId);
+    localStorage.setItem(LS_KEYS.WORKSPACES, JSON.stringify(workspaces));
+    const curRaw = localStorage.getItem(LS_KEYS.CURRENT_WORKSPACE);
+    if (curRaw) {
+      try {
+        if (JSON.parse(curRaw).id === wsId) localStorage.removeItem(LS_KEYS.CURRENT_WORKSPACE);
+      } catch {}
+    }
+    const filterWs = (key: string) => {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      try {
+        localStorage.setItem(key, JSON.stringify(JSON.parse(raw).filter((r: any) => (r.workspace_id || r.org_id) !== wsId)));
+      } catch {}
+    };
+    filterWs(LS_KEYS.CUSTOMERS);
+    filterWs(LS_KEYS.LOANS);
+    filterWs(LS_KEYS.PAYMENTS);
+    filterWs(LS_KEYS.PLAN_DAYS);
+  },
+
   getCurrentWorkspace(): Workspace | null {
     const curUser = userManager.getCurrentUser();
-    if (!curUser) return null;
+    if (!curUser || curUser.role === 'admin') return null;
 
     const raw = localStorage.getItem(LS_KEYS.CURRENT_WORKSPACE);
     if (raw) {
       try {
         const ws: Workspace = JSON.parse(raw);
-        // If super admin, can view any workspace
-        if (curUser.role === 'admin' || ws.owner_id === curUser.id || ws.owner_email?.toLowerCase() === curUser.email.toLowerCase()) {
+        if (ws.owner_id === curUser.id || ws.owner_email?.toLowerCase() === curUser.email.toLowerCase()) {
           return ws;
         }
       } catch {}
     }
 
     const all = db.getWorkspaces();
-    if (curUser.role === 'admin') {
-      return all.length > 0 ? all[0] : null;
-    }
     // Strict isolation: ONLY return a workspace owned by this user
     const userWs = all.find(w => w.owner_id === curUser.id || w.owner_email?.toLowerCase() === curUser.email.toLowerCase());
+    if (userWs) {
+      localStorage.setItem(LS_KEYS.CURRENT_WORKSPACE, JSON.stringify(userWs));
+    }
     return userWs || null;
   },
 
@@ -618,9 +643,10 @@ export const db = {
 
   createFreshWorkspace(name: string, ownerId: string, ownerEmail: string, daily_on = true, weekly_on = true): Workspace {
     const curUser = userManager.getCurrentUser();
-    // Security check: only approved accounts or super admin can create workspace
-    if (curUser && curUser.id === ownerId && curUser.status !== 'approved' && curUser.role !== 'admin') {
-      throw new Error('Account must be approved by Super Admin before creating a business workspace');
+    const isAdminAct = !!adminSession.getAdminSession();
+    // Security check: only approved accounts or authorized platform operator can provision workspace
+    if (!isAdminAct && curUser && curUser.id === ownerId && curUser.status !== 'approved') {
+      throw new Error('Account must be approved before creating a business workspace');
     }
 
     const ws: Workspace = {
@@ -635,7 +661,6 @@ export const db = {
       cloud_sync: false,
     };
     db.saveWorkspace(ws);
-    db.setCurrentWorkspace(ws);
 
     // Update user's workspace_id in directory
     const users = userManager.getUsers();
@@ -646,6 +671,7 @@ export const db = {
     }
 
     if (curUser && curUser.id === ownerId) {
+      db.setCurrentWorkspace(ws);
       curUser.workspace_id = ws.id;
       userManager.setCurrentUser(curUser);
     }
@@ -661,14 +687,15 @@ export const db = {
     try {
       const all: Customer[] = JSON.parse(raw);
       const ws = workspaceId || db.getCurrentWorkspace()?.id;
-      return ws ? all.filter(c => (c.workspace_id || c.org_id) === ws) : all;
+      return ws ? all.filter(c => (c.workspace_id || c.org_id) === ws) : [];
     } catch { return []; }
   },
 
   saveCustomer(c: Partial<Customer>): Customer {
     const raw = localStorage.getItem(LS_KEYS.CUSTOMERS);
     const list: Customer[] = raw ? JSON.parse(raw) : [];
-    const wsId = c.workspace_id || c.org_id || db.getCurrentWorkspace()?.id || 'ws_default';
+    const wsId = c.workspace_id || c.org_id || db.getCurrentWorkspace()?.id;
+    if (!wsId) throw new Error('No active business workspace selected.');
 
     if (c.id) {
       const idx = list.findIndex(x => x.id === c.id);
@@ -714,14 +741,15 @@ export const db = {
     try {
       const all: Loan[] = JSON.parse(raw);
       const ws = workspaceId || db.getCurrentWorkspace()?.id;
-      return ws ? all.filter(l => (l.workspace_id || l.org_id) === ws) : all;
+      return ws ? all.filter(l => (l.workspace_id || l.org_id) === ws) : [];
     } catch { return []; }
   },
 
   saveLoan(l: Partial<Loan>): Loan {
     const raw = localStorage.getItem(LS_KEYS.LOANS);
     const list: Loan[] = raw ? JSON.parse(raw) : [];
-    const wsId = l.workspace_id || l.org_id || db.getCurrentWorkspace()?.id || 'ws_default';
+    const wsId = l.workspace_id || l.org_id || db.getCurrentWorkspace()?.id;
+    if (!wsId) throw new Error('No active business workspace selected.');
 
     if (l.id) {
       const idx = list.findIndex(x => x.id === l.id);
@@ -753,13 +781,21 @@ export const db = {
 
   deleteLoan(id: string) {
     const raw = localStorage.getItem(LS_KEYS.LOANS);
-    if (!raw) return;
-    const list: Loan[] = JSON.parse(raw).filter((x: Loan) => x.id !== id);
-    localStorage.setItem(LS_KEYS.LOANS, JSON.stringify(list));
-    const payments = db.getPayments().filter(p => p.loan_id !== id);
-    localStorage.setItem(LS_KEYS.PAYMENTS, JSON.stringify(payments));
-    const plans = db.getPlanDays().filter(p => p.loan_id !== id);
-    localStorage.setItem(LS_KEYS.PLAN_DAYS, JSON.stringify(plans));
+    if (raw) {
+      const list: Loan[] = JSON.parse(raw).filter((x: Loan) => x.id !== id);
+      localStorage.setItem(LS_KEYS.LOANS, JSON.stringify(list));
+    }
+    // Strictly preserve all other tenants' records!
+    const rawPay = localStorage.getItem(LS_KEYS.PAYMENTS);
+    if (rawPay) {
+      const payments = JSON.parse(rawPay).filter((p: Payment) => p.loan_id !== id);
+      localStorage.setItem(LS_KEYS.PAYMENTS, JSON.stringify(payments));
+    }
+    const rawPlans = localStorage.getItem(LS_KEYS.PLAN_DAYS);
+    if (rawPlans) {
+      const plans = JSON.parse(rawPlans).filter((p: PlanDay) => p.loan_id !== id);
+      localStorage.setItem(LS_KEYS.PLAN_DAYS, JSON.stringify(plans));
+    }
   },
 
   getPayments(workspaceId?: string): Payment[] {
@@ -768,14 +804,15 @@ export const db = {
     try {
       const all: Payment[] = JSON.parse(raw);
       const ws = workspaceId || db.getCurrentWorkspace()?.id;
-      return ws ? all.filter(p => (p.workspace_id || p.org_id) === ws) : all;
+      return ws ? all.filter(p => (p.workspace_id || p.org_id) === ws) : [];
     } catch { return []; }
   },
 
   addPayment(loan_id: string, amount: number, paid_on: string = today(), notes = ''): Payment {
     const raw = localStorage.getItem(LS_KEYS.PAYMENTS);
     const list: Payment[] = raw ? JSON.parse(raw) : [];
-    const wsId = db.getCurrentWorkspace()?.id || 'ws_default';
+    const wsId = db.getCurrentWorkspace()?.id;
+    if (!wsId) throw new Error('No active business workspace selected.');
     const item: Payment = {
       id: uid(),
       workspace_id: wsId,
@@ -811,14 +848,15 @@ export const db = {
     try {
       const all: PlanDay[] = JSON.parse(raw);
       const ws = workspaceId || db.getCurrentWorkspace()?.id;
-      return ws ? all.filter(p => (p.workspace_id || p.org_id) === ws) : all;
+      return ws ? all.filter(p => (p.workspace_id || p.org_id) === ws) : [];
     } catch { return []; }
   },
 
   togglePlanDay(day: string, loan_id: string): boolean {
     const raw = localStorage.getItem(LS_KEYS.PLAN_DAYS);
     const list: PlanDay[] = raw ? JSON.parse(raw) : [];
-    const wsId = db.getCurrentWorkspace()?.id || 'ws_default';
+    const wsId = db.getCurrentWorkspace()?.id;
+    if (!wsId) return false;
     const idx = list.findIndex(p => p.day === day && p.loan_id === loan_id && (p.workspace_id || p.org_id) === wsId);
     if (idx >= 0) {
       list.splice(idx, 1);
@@ -846,53 +884,6 @@ export const db = {
 
   clearAll() {
     Object.values(LS_KEYS).forEach(k => localStorage.removeItem(k));
-  },
-
-  loadSampleData() {
-    const ws: Workspace = {
-      id: 'ws_sample',
-      name: 'Kerala Express Micro Finance',
-      owner_id: 'user_admin',
-      owner_email: DEFAULT_ADMIN_EMAIL,
-      daily_on: true,
-      weekly_on: true,
-      currency: 'INR',
-      created_at: new Date().toISOString(),
-      cloud_sync: false,
-    };
-    db.saveWorkspace(ws);
-    db.setCurrentWorkspace(ws);
-
-    const c1: Customer = { id: 'c1', workspace_id: 'ws_sample', org_id: 'ws_sample', name: 'Rajesh Kumar', phone: '9847012345', area: 'Ernakulam', village: 'Kakkanad', address: 'Near InfoPark Gate 2', loc: '9.9981,76.3578', guarantor: 'Suresh Kumar', id_note: 'Aadhaar 8832-1243-9901', notes: 'Tea stall' };
-    const c2: Customer = { id: 'c2', workspace_id: 'ws_sample', org_id: 'ws_sample', name: 'Anjali Varma', phone: '9847123456', area: 'Ernakulam', village: 'Edappally', address: 'Toll Junction', loc: '10.0236,76.3083', guarantor: 'Radha', id_note: 'Voter ID KL/12/32', notes: 'Tailoring shop' };
-    const c3: Customer = { id: 'c3', workspace_id: 'ws_sample', org_id: 'ws_sample', name: 'Muhammed Shafi', phone: '9847234567', area: 'Aluva', village: 'Thottakkattukara', address: 'Bus Stand Road', loc: '10.1076,76.3516', guarantor: 'Kabeer', id_note: 'DL-072019', notes: 'Vegetable merchant' };
-    const c4: Customer = { id: 'c4', workspace_id: 'ws_sample', org_id: 'ws_sample', name: 'Bindu Sajeev', phone: '9847345678', area: 'Thrissur', village: 'Chalakudy', address: 'Market Road', loc: '10.3071,76.3331', guarantor: 'Sajeev K.', id_note: 'Aadhaar 5543-9912-4412', notes: 'Bakery supplier' };
-    const c5: Customer = { id: 'c5', workspace_id: 'ws_sample', org_id: 'ws_sample', name: 'Thomas Joseph', phone: '9847456789', area: 'Ernakulam', village: 'Kaloor', address: 'Stadium Link Road', loc: '9.9987,76.2995', guarantor: 'Mathew', id_note: 'PAN ABCDE1234F', notes: 'Auto driver' };
-
-    localStorage.setItem(LS_KEYS.CUSTOMERS, JSON.stringify([c1, c2, c3, c4, c5]));
-
-    const todayDate = today();
-    const l1: Loan = { id: 'l1', workspace_id: 'ws_sample', org_id: 'ws_sample', customer_id: 'c1', mode: 'daily', principal: 10000, int_type: 'pct', int_val: 10, total: 11000, n: 50, inst: 220, start_date: addDays(todayDate, -20) };
-    const l2: Loan = { id: 'l2', workspace_id: 'ws_sample', org_id: 'ws_sample', customer_id: 'c2', mode: 'daily', principal: 20000, int_type: 'amt', int_val: 2000, total: 22000, n: 100, inst: 220, start_date: addDays(todayDate, -10) };
-    const l3: Loan = { id: 'l3', workspace_id: 'ws_sample', org_id: 'ws_sample', customer_id: 'c3', mode: 'weekly', principal: 15000, int_type: 'pct', int_val: 12, total: 16800, n: 12, inst: 1400, start_date: addDays(todayDate, -21) };
-    const l4: Loan = { id: 'l4', workspace_id: 'ws_sample', org_id: 'ws_sample', customer_id: 'c4', mode: 'daily', principal: 5000, int_type: 'amt', int_val: 500, total: 5500, n: 25, inst: 220, start_date: addDays(todayDate, -2) };
-    const l5: Loan = { id: 'l5', workspace_id: 'ws_sample', org_id: 'ws_sample', customer_id: 'c5', mode: 'daily', principal: 8000, int_type: 'pct', int_val: 10, total: 8800, n: 40, inst: 220, start_date: addDays(todayDate, -45) };
-
-    localStorage.setItem(LS_KEYS.LOANS, JSON.stringify([l1, l2, l3, l4, l5]));
-
-    const payments: Payment[] = [
-      { id: 'p1', workspace_id: 'ws_sample', org_id: 'ws_sample', loan_id: 'l1', amount: 220 * 18, paid_on: addDays(todayDate, -2) },
-      { id: 'p2', workspace_id: 'ws_sample', org_id: 'ws_sample', loan_id: 'l2', amount: 220 * 8, paid_on: addDays(todayDate, -1) },
-      { id: 'p3', workspace_id: 'ws_sample', org_id: 'ws_sample', loan_id: 'l3', amount: 1400 * 2, paid_on: addDays(todayDate, -7) },
-      { id: 'p4', workspace_id: 'ws_sample', org_id: 'ws_sample', loan_id: 'l5', amount: 220 * 20, paid_on: addDays(todayDate, -25) },
-    ];
-    localStorage.setItem(LS_KEYS.PAYMENTS, JSON.stringify(payments));
-
-    localStorage.setItem(LS_KEYS.PLAN_DAYS, JSON.stringify([
-      { id: 'pd1', workspace_id: 'ws_sample', org_id: 'ws_sample', day: todayDate, loan_id: 'l1' },
-      { id: 'pd2', workspace_id: 'ws_sample', org_id: 'ws_sample', day: todayDate, loan_id: 'l2' },
-      { id: 'pd3', workspace_id: 'ws_sample', org_id: 'ws_sample', day: todayDate, loan_id: 'l4' },
-    ]));
   },
 };
 
@@ -1211,10 +1202,10 @@ export async function boot(): Promise<Workspace> {
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // 2. Fetch User Record from Directory
+  // 2. Fetch Client User Record from Directory (strictly non-admin business operators)
   const users = userManager.getUsers();
   const user = users.find(u => u.id === session.userId || u.email.toLowerCase() === session.email.toLowerCase());
-  if (!user) {
+  if (!user || user.role === 'admin') {
     authSession.endSession();
     location.href = 'index.html';
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
@@ -1247,10 +1238,9 @@ export async function boot(): Promise<Workspace> {
     return { id: '', name: 'Setup', owner_id: '', owner_email: '', daily_on: true, weekly_on: true, currency: 'INR', created_at: '', cloud_sync: false };
   }
 
-  // Render Top Header
+  // Render Top Header (Strictly Client Business UI — Zero Admin Exposure)
   const hh = here === 'plan' ? 'today' : here;
   const isCloud = ws.cloud_sync;
-  const isAdmin = user.role === 'admin';
   const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
   document.querySelector('header.top-header')?.remove();
@@ -1266,7 +1256,7 @@ export async function boot(): Promise<Workspace> {
           </div>
           <div class="brand-meta">
             <span class="badge ${isCloud ? 'badge-cloud' : 'badge-local'}">
-              ${isCloud ? '☁️ Cloud Synced' : '⚡ Local & Offline'}
+              ${isCloud ? '☁️ Cloud' : '⚡ Local'}
             </span>
             <span class="date-chip">${esc(user.email)}</span>
             <span class="date-chip">· ${dateStr}</span>
@@ -1283,11 +1273,6 @@ export async function boot(): Promise<Workspace> {
       </nav>
 
       <div class="header-actions">
-        ${isAdmin ? `
-          <a class="btn btn-outline" href="admin.html" style="font-size: 11px; padding: 5px 9px; color: #f59e0b; border-color: #f59e0b; text-decoration: none; font-weight: 700;">
-            👑 Admin
-          </a>
-        ` : ''}
         <button class="theme-btn" id="theme-toggle" title="Toggle Light/Dark Theme" type="button">
           ${document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️'}
         </button>
@@ -1500,8 +1485,9 @@ export function rowHtml(r: Row, isPlanned = false, extraHtml = ''): string {
         <div class="action-links">
           ${extraHtml}
           ${c.phone ? `<a class="action-chip" href="tel:${esc(c.phone)}">📞 Call</a>` : ''}
-          ${c.phone ? `<a class="action-chip" href="${wa(c.phone, remMsg)}" target="_blank" rel="noopener">💬 WhatsApp Reminder</a>` : ''}
-          ${done && c.phone ? `<a class="action-chip action-chip-success" href="${wa(c.phone, recMsg)}" target="_blank" rel="noopener">🧾 Send Receipt</a>` : ''}
+          ${c.phone ? `<a class="action-chip" href="${wa(c.phone, remMsg)}" target="_blank" rel="noopener">💬 Remind</a>` : ''}
+          ${done && c.phone ? `<a class="action-chip action-chip-success" href="${wa(c.phone, recMsg)}" target="_blank" rel="noopener">🧾 Receipt</a>` : ''}
+          <a class="action-chip" href="ledger.html?c=${c.id}">📒 Ledger</a>
           ${done ? `<button class="action-chip action-chip-undo" data-a="undo" data-id="${r.l.id}" type="button">↩ Undo</button>` : ''}
         </div>
       </div>
@@ -1512,7 +1498,7 @@ export function rowHtml(r: Row, isPlanned = false, extraHtml = ''): string {
             <input class="collect-amt-input" id="a-${r.l.id}" type="number" inputmode="decimal" value="${d}">
             <div class="preset-btns">
               <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${d}'">Due</button>
-              <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${Math.round(r.l.inst)}'">${money(r.l.inst)}</button>
+              ${d !== Math.round(r.l.inst) ? `<button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${Math.round(r.l.inst)}'">${money(r.l.inst)}</button>` : ''}
               <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${Math.round(r.outstanding)}'">Full</button>
             </div>
           </div>

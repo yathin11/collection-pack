@@ -8,7 +8,6 @@ import {
   bindPay,
   money,
   today,
-  addDays,
   $,
   Row,
   toast,
@@ -112,12 +111,20 @@ async function render() {
     <div id="collect-list">
       ${filtered.length > 0
         ? filtered.map(r => rowHtml(r, pl.has(r.l.id))).join('')
-        : `<div class="card" style="text-align: center; padding: 40px 16px; color: var(--mu);">
-            <div style="font-size: 36px; margin-bottom: 8px;">✨</div>
-            <h3 style="color: var(--tx);">No customers found for this filter</h3>
-            <p style="margin: 6px 0 16px;">Schedule collections using the Plan Day tool or pick another date.</p>
-            <a class="btn btn-primary" href="plan.html">📅 Open Day Planner</a>
-          </div>`
+        : (rows.length === 0
+          ? `<div class="card" style="text-align: center; padding: 36px 16px; color: var(--mu);">
+              <div style="font-size: 32px; margin-bottom: 8px;">💼</div>
+              <h3 style="color: var(--tx);">No Borrowers or Loans Yet</h3>
+              <p style="margin: 6px auto 16px; max-width: 380px;">Register your first customer and issue a loan to start daily or weekly collections.</p>
+              <a class="btn btn-primary" href="customers.html">＋ Register Customer & Loan</a>
+            </div>`
+          : `<div class="card" style="text-align: center; padding: 36px 16px; color: var(--mu);">
+              <div style="font-size: 32px; margin-bottom: 8px;">✨</div>
+              <h3 style="color: var(--tx);">No customers found for this filter</h3>
+              <p style="margin: 6px 0 16px;">Schedule collections using the Plan Day tool or pick another date.</p>
+              <a class="btn btn-primary" href="plan.html">📅 Open Day Planner</a>
+            </div>`
+        )
       }
     </div>
   `;
@@ -169,10 +176,6 @@ async function render() {
     await boot();
     bindPay(render, () => rows, () => on);
     await render();
-
-    if ('Notification' in window && Notification.permission === 'default') {
-      try { Notification.requestPermission(); } catch {}
-    }
   } catch (err: any) {
     console.error('Today render error:', err);
     toast('Error loading today collections: ' + (err.message || 'Error'), 'error');
