@@ -55,11 +55,33 @@ export interface Customer {
   created_at?: string;
 }
 
+export type PaymentMode = 'cash' | 'upi' | 'bank';
+export type PaymentType = 'installment' | 'partial' | 'advance' | 'settlement' | 'penalty';
+
+export const PAY_MODE_LABELS: Record<PaymentMode, string> = {
+  cash: '💵 Cash',
+  upi: '📱 UPI',
+  bank: '🏦 Bank',
+};
+
+export const PAY_TYPE_LABELS: Record<PaymentType, string> = {
+  installment: 'Installment',
+  partial: 'Partial Payment',
+  advance: 'Advance / Extra',
+  settlement: 'Full Settlement',
+  penalty: 'Late Fee / Penalty',
+};
+
+export const formatPayMode = (m?: PaymentMode | string) => PAY_MODE_LABELS[(m as PaymentMode) || 'cash'] || '💵 Cash';
+export const formatPayType = (t?: PaymentType | string) => PAY_TYPE_LABELS[(t as PaymentType) || 'installment'] || 'Installment';
+
 export interface Loan {
   id: string;
   workspace_id?: string;
   org_id?: string;
   customer_id: string;
+  parent_loan_id?: string | null;
+  loan_label?: string;
   mode: 'daily' | 'weekly';
   principal: number;
   int_type: 'pct' | 'amt';
@@ -78,6 +100,8 @@ export interface Payment {
   loan_id: string;
   amount: number;
   paid_on: string;
+  pay_mode?: PaymentMode;
+  pay_type?: PaymentType;
   by_user?: string;
   notes?: string;
   created_at?: string;
@@ -102,6 +126,9 @@ export interface Row {
   cleared: boolean;
   paidOn: number;
   progressPct: number;
+  todayPayments: Payment[];
+  parentLoan?: Loan;
+  childCount: number;
 }
 
 // -------------------------------------------------------------
@@ -764,6 +791,8 @@ export const db = {
       workspace_id: wsId,
       org_id: wsId,
       customer_id: l.customer_id!,
+      parent_loan_id: l.parent_loan_id || null,
+      loan_label: (l.loan_label || '').trim() || (l.parent_loan_id ? 'Child Loan' : 'Main Loan'),
       mode: l.mode || 'daily',
       principal: Number(l.principal || 0),
       int_type: l.int_type || 'pct',
@@ -782,7 +811,9 @@ export const db = {
   deleteLoan(id: string) {
     const raw = localStorage.getItem(LS_KEYS.LOANS);
     if (raw) {
-      const list: Loan[] = JSON.parse(raw).filter((x: Loan) => x.id !== id);
+      const list: Loan[] = JSON.parse(raw)
+        .filter((x: Loan) => x.id !== id)
+        .map((x: Loan) => (x.parent_loan_id === id ? { ...x, parent_loan_id: null } : x));
       localStorage.setItem(LS_KEYS.LOANS, JSON.stringify(list));
     }
     // Strictly preserve all other tenants' records!
@@ -808,7 +839,14 @@ export const db = {
     } catch { return []; }
   },
 
-  addPayment(loan_id: string, amount: number, paid_on: string = today(), notes = ''): Payment {
+  addPayment(
+    loan_id: string,
+    amount: number,
+    paid_on: string = today(),
+    notes = '',
+    pay_mode: PaymentMode = 'cash',
+    pay_type: PaymentType = 'installment'
+  ): Payment {
     const raw = localStorage.getItem(LS_KEYS.PAYMENTS);
     const list: Payment[] = raw ? JSON.parse(raw) : [];
     const wsId = db.getCurrentWorkspace()?.id;
@@ -820,6 +858,8 @@ export const db = {
       loan_id,
       amount: Number(amount),
       paid_on,
+      pay_mode,
+      pay_type,
       notes,
       created_at: new Date().toISOString(),
     };
@@ -918,6 +958,7 @@ export function generateExcelWorkbook(
   const loanRowsXml = rows.map(r => `
     <Row>
       <Cell><Data ss:Type="String">${sanitize(r.l.id)}</Data></Cell>
+      <Cell><Data ss:Type="String">${sanitize(r.l.parent_loan_id ? 'Child Loan' : 'Main Loan')}${r.l.loan_label ? ' (' + sanitize(r.l.loan_label) + ')' : ''}</Data></Cell>
       <Cell><Data ss:Type="String">${sanitize(r.c.name)}</Data></Cell>
       <Cell><Data ss:Type="String">${sanitize(r.c.phone)}</Data></Cell>
       <Cell><Data ss:Type="String">${sanitize(r.l.mode)}</Data></Cell>
@@ -935,17 +976,17 @@ export function generateExcelWorkbook(
   `).join('');
 
   const paymentRowsXml = payments.map(p => {
-    const cust = customers.find(c => {
-      const l = loans.find(x => x.id === p.loan_id);
-      return l && l.customer_id === c.id;
-    });
+    const l = loans.find(x => x.id === p.loan_id);
+    const cust = customers.find(c => l && l.customer_id === c.id);
     return `
       <Row>
         <Cell><Data ss:Type="String">${sanitize(p.id)}</Data></Cell>
         <Cell><Data ss:Type="String">${sanitize(p.paid_on)}</Data></Cell>
         <Cell><Data ss:Type="String">${sanitize(cust ? cust.name : 'Unknown')}</Data></Cell>
-        <Cell><Data ss:Type="String">${sanitize(p.loan_id)}</Data></Cell>
+        <Cell><Data ss:Type="String">${sanitize(l ? (l.loan_label || (l.parent_loan_id ? 'Child Loan' : 'Main Loan')) : p.loan_id)}</Data></Cell>
         <Cell><Data ss:Type="Number">${p.amount}</Data></Cell>
+        <Cell><Data ss:Type="String">${sanitize((p.pay_mode || 'cash').toUpperCase())}</Data></Cell>
+        <Cell><Data ss:Type="String">${sanitize(formatPayType(p.pay_type))}</Data></Cell>
         <Cell><Data ss:Type="String">${sanitize(p.notes)}</Data></Cell>
       </Row>
     `;
@@ -976,7 +1017,7 @@ export function generateExcelWorkbook(
  <Styles>
   <Style ss:ID="Header">
    <Font ss:Bold="1" ss:Color="#FFFFFF"/>
-   <Interior ss:Color="#4F46E5" ss:Pattern="Solid"/>
+   <Interior ss:Color="#2563EB" ss:Pattern="Solid"/>
    <Alignment ss:Horizontal="Center"/>
   </Style>
  </Styles>
@@ -1002,6 +1043,7 @@ export function generateExcelWorkbook(
   <Table>
    <Row ss:StyleID="Header">
     <Cell><Data ss:Type="String">Loan ID</Data></Cell>
+    <Cell><Data ss:Type="String">Hierarchy / Label</Data></Cell>
     <Cell><Data ss:Type="String">Customer</Data></Cell>
     <Cell><Data ss:Type="String">Phone</Data></Cell>
     <Cell><Data ss:Type="String">Mode</Data></Cell>
@@ -1025,8 +1067,10 @@ export function generateExcelWorkbook(
     <Cell><Data ss:Type="String">Receipt ID</Data></Cell>
     <Cell><Data ss:Type="String">Paid Date</Data></Cell>
     <Cell><Data ss:Type="String">Customer</Data></Cell>
-    <Cell><Data ss:Type="String">Loan ID</Data></Cell>
+    <Cell><Data ss:Type="String">Loan Account</Data></Cell>
     <Cell><Data ss:Type="String">Amount Paid (₹)</Data></Cell>
+    <Cell><Data ss:Type="String">Payment Mode</Data></Cell>
+    <Cell><Data ss:Type="String">Payment Type</Data></Cell>
     <Cell><Data ss:Type="String">Notes</Data></Cell>
    </Row>
    ${paymentRowsXml}
@@ -1344,13 +1388,25 @@ export async function load(on = today()) {
   const payments = db.getPayments(ws?.id);
 
   const cm = new Map<string, Customer>(customers.map(c => [c.id, c]));
+  const loanMap = new Map<string, Loan>(loans.map(l => [l.id, l]));
+  const childCountMap = new Map<string, number>();
+  loans.forEach(l => {
+    if (l.parent_loan_id) {
+      childCountMap.set(l.parent_loan_id, (childCountMap.get(l.parent_loan_id) || 0) + 1);
+    }
+  });
+
   const paid = new Map<string, number>();
   const paidOn = new Map<string, number>();
+  const todayPaymentsMap = new Map<string, Payment[]>();
 
   payments.forEach(p => {
     paid.set(p.loan_id, (paid.get(p.loan_id) || 0) + Number(p.amount));
     if (p.paid_on === on) {
       paidOn.set(p.loan_id, (paidOn.get(p.loan_id) || 0) + Number(p.amount));
+      const arr = todayPaymentsMap.get(p.loan_id) || [];
+      arr.push(p);
+      todayPaymentsMap.set(p.loan_id, arr);
     }
   });
 
@@ -1385,6 +1441,9 @@ export async function load(on = today()) {
         paidOn: pOn,
         risk,
         progressPct,
+        todayPayments: todayPaymentsMap.get(l.id) || [],
+        parentLoan: l.parent_loan_id ? loanMap.get(l.parent_loan_id) : undefined,
+        childCount: childCountMap.get(l.id) || 0,
       };
     });
 
@@ -1405,15 +1464,21 @@ export const dueAmt = (r: Row) => Math.max(r.pending, Math.min(Number(r.l.inst),
 // -------------------------------------------------------------
 // Payment Actions
 // -------------------------------------------------------------
-export async function pay(loan_id: string, amount: number, on: string = today()): Promise<void> {
+export async function pay(
+  loan_id: string,
+  amount: number,
+  on: string = today(),
+  pay_mode: PaymentMode = 'cash',
+  pay_type: PaymentType = 'installment'
+): Promise<void> {
   const ws = db.getCurrentWorkspace();
   const client = getSupabase();
 
-  db.addPayment(loan_id, amount, on);
+  db.addPayment(loan_id, amount, on, '', pay_mode, pay_type);
 
   if (ws?.cloud_sync && client) {
     try {
-      await client.from('payments').insert({ loan_id, amount, paid_on: on, org_id: ws.id });
+      await client.from('payments').insert({ loan_id, amount, paid_on: on, pay_mode, pay_type, org_id: ws.id });
     } catch (e) {
       console.warn('Cloud payment sync failed:', e);
     }
@@ -1443,23 +1508,72 @@ export async function undo(loan_id: string, on: string = today()): Promise<void>
 // -------------------------------------------------------------
 export function rowHtml(r: Row, isPlanned = false, extraHtml = ''): string {
   const d = Math.round(dueAmt(r));
+  const instRound = Math.round(Number(r.l.inst));
   const c = r.c;
   const done = r.paidOn > 0;
-  const remMsg = `Hello ${c.name}, collection of ${money(d)} is due today. Please keep it ready. - ${db.getCurrentWorkspace()?.name || 'Collection Manager'}`;
-  const recMsg = `Receipt: Received ${money(r.paidOn)} on ${today()} from ${c.name}. Remaining balance: ${money(r.outstanding)}. Thank you. - ${db.getCurrentWorkspace()?.name || 'Collection Manager'}`;
+  const loanName = r.l.loan_label || (r.l.parent_loan_id ? 'Child Loan' : 'Main Loan');
+  const lastPay = r.todayPayments.length ? r.todayPayments[r.todayPayments.length - 1] : null;
+  const remMsg = `Hello ${c.name}, collection of ${money(d)} (${loanName}) is due today. Please keep it ready. - ${db.getCurrentWorkspace()?.name || 'Collection Manager'}`;
+  const recMsg = `Receipt: Received ${money(r.paidOn)} (${formatPayMode(lastPay?.pay_mode)} · ${formatPayType(lastPay?.pay_type)}) on ${today()} from ${c.name} for ${loanName}. Remaining balance: ${money(r.outstanding)}. Thank you. - ${db.getCurrentWorkspace()?.name || 'Collection Manager'}`;
 
   const statusTags = [
     `<span class="tag tag-mode">${r.l.mode}</span>`,
-    r.pending > Number(r.l.inst) ? `<span class="tag tag-overdue">⚠️ Overdue ${money(r.pending)}</span>` : '',
+    r.l.parent_loan_id
+      ? `<span class="tag tag-child">↳ ${esc(loanName)}${r.parentLoan ? ` (${esc(r.parentLoan.loan_label || 'Main')})` : ''}</span>`
+      : (r.childCount > 0 ? `<span class="tag tag-plan">${esc(loanName)} · ${r.childCount} Child</span>` : ''),
+    r.pending > Number(r.l.inst) && !done ? `<span class="tag tag-overdue">⚠️ Overdue ${money(r.pending)}</span>` : '',
     r.risk ? `<span class="tag tag-risk">🚨 High Risk</span>` : '',
     isPlanned ? `<span class="tag tag-plan">📅 Planned</span>` : '',
-    done ? `<span class="tag tag-success">✓ Paid Today ${money(r.paidOn)}</span>` : '',
+    done ? `<span class="tag tag-success">✓ Paid ${money(r.paidOn)}</span>` : '',
   ].filter(Boolean).join(' ');
+
+  const todayReceiptsHtml = done ? `
+    <div class="today-receipts-strip">
+      ${r.todayPayments.map(tp => `
+        <span class="receipt-pill">
+          ${formatPayMode(tp.pay_mode)} · <b>${formatPayType(tp.pay_type)}</b> · ${money(tp.amount)}
+        </span>
+      `).join('')}
+    </div>
+  ` : '';
 
   const locationText = [c.village, c.area].filter(Boolean).join(', ');
 
+  const payControlsHtml = (defaultAmt: number, isExtra: boolean) => `
+    <div class="pay-controls-panel" id="pcp-${r.l.id}">
+      <div class="pay-meta-row">
+        <div class="pay-mode-group" data-pm-group="${r.l.id}">
+          <button type="button" class="pay-mode-pill selected" data-pm="cash" data-lid="${r.l.id}">💵 Cash</button>
+          <button type="button" class="pay-mode-pill" data-pm="upi" data-lid="${r.l.id}">📱 UPI</button>
+          <button type="button" class="pay-mode-pill" data-pm="bank" data-lid="${r.l.id}">🏦 Bank</button>
+        </div>
+        <select class="pay-type-select" id="pt-${r.l.id}" aria-label="Payment Type">
+          ${!isExtra ? '<option value="auto">Type: Auto Detect</option>' : ''}
+          <option value="installment" ${!isExtra ? '' : ''}>Installment</option>
+          <option value="partial">Partial Payment</option>
+          <option value="advance" ${isExtra ? 'selected' : ''}>Advance / Extra</option>
+          <option value="settlement">Full Settlement</option>
+          <option value="penalty">Late Fee / Penalty</option>
+        </select>
+      </div>
+      <div class="collect-action-bar">
+        <div class="input-with-presets">
+          <input class="collect-amt-input" id="a-${r.l.id}" type="text" inputmode="decimal" pattern="[0-9]*" value="${defaultAmt}" aria-label="Amount">
+          <div class="preset-btns">
+            <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${isExtra ? Math.min(instRound, Math.round(r.outstanding)) : d}'">${isExtra ? '1 Inst' : 'Due'}</button>
+            ${!isExtra && d !== instRound ? `<button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${instRound}'">${money(instRound)}</button>` : ''}
+            <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${Math.round(r.outstanding)}'">Full</button>
+          </div>
+        </div>
+        <button class="btn btn-primary collect-btn" data-a="pay" data-id="${r.l.id}" data-extra="${isExtra ? '1' : '0'}">
+          ${isExtra ? '✓ Confirm Extra' : '✓ Collect'}
+        </button>
+      </div>
+    </div>
+  `;
+
   return `
-    <div class="collect-card ${done ? 'is-collected' : ''} ${r.risk ? 'is-risk' : ''}">
+    <div class="collect-card ${done ? 'is-collected' : ''} ${r.risk ? 'is-risk' : ''} ${r.l.parent_loan_id ? 'is-child-loan' : ''}">
       <div class="collect-main">
         <div class="collect-header">
           <div class="customer-info">
@@ -1478,6 +1592,8 @@ export function rowHtml(r: Row, isPlanned = false, extraHtml = ''): string {
           <span class="meta-item">🗓️ ${money(r.l.inst)}/${r.l.mode === 'daily' ? 'day' : 'wk'}</span>
         </div>
 
+        ${todayReceiptsHtml}
+
         <div class="progress-bar">
           <div class="progress-fill ${r.risk ? 'fill-risk' : ''}" style="width: ${r.progressPct}%"></div>
         </div>
@@ -1487,26 +1603,20 @@ export function rowHtml(r: Row, isPlanned = false, extraHtml = ''): string {
           ${c.phone ? `<a class="action-chip" href="tel:${esc(c.phone)}">📞 Call</a>` : ''}
           ${c.phone ? `<a class="action-chip" href="${wa(c.phone, remMsg)}" target="_blank" rel="noopener">💬 Remind</a>` : ''}
           ${done && c.phone ? `<a class="action-chip action-chip-success" href="${wa(c.phone, recMsg)}" target="_blank" rel="noopener">🧾 Receipt</a>` : ''}
-          <a class="action-chip" href="ledger.html?c=${c.id}">📒 Ledger</a>
+          <a class="action-chip" href="ledger.html?c=${c.id}&loan=${r.l.id}">📒 Ledger</a>
+          <a class="action-chip" href="customers.html?cust=${c.id}&parent=${r.l.parent_loan_id || r.l.id}">＋ Child Loan</a>
           ${done ? `<button class="action-chip action-chip-undo" data-a="undo" data-id="${r.l.id}" type="button">↩ Undo</button>` : ''}
         </div>
       </div>
 
-      ${!r.cleared ? `
-        <div class="collect-action-bar">
-          <div class="input-with-presets">
-            <input class="collect-amt-input" id="a-${r.l.id}" type="number" inputmode="decimal" value="${d}">
-            <div class="preset-btns">
-              <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${d}'">Due</button>
-              ${d !== Math.round(r.l.inst) ? `<button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${Math.round(r.l.inst)}'">${money(r.l.inst)}</button>` : ''}
-              <button class="preset-btn" type="button" onclick="document.getElementById('a-${r.l.id}').value='${Math.round(r.outstanding)}'">Full</button>
-            </div>
-          </div>
-          <button class="btn btn-primary collect-btn" data-a="pay" data-id="${r.l.id}">
-            ${done ? '＋ Collect More' : '✓ Collect'}
-          </button>
-        </div>
-      ` : `
+      ${!r.cleared ? (
+        done
+          ? `<details class="extra-pay-details">
+              <summary class="extra-pay-summary">＋ Record Extra / Advance Payment</summary>
+              ${payControlsHtml(Math.min(instRound, Math.round(r.outstanding)), true)}
+            </details>`
+          : payControlsHtml(d, false)
+      ) : `
         <div class="cleared-badge">🎉 Fully Cleared</div>
       `}
     </div>
@@ -1521,6 +1631,16 @@ export function bindPay(rerender: () => void, getRows: () => Row[], on: () => st
   if (!app) return;
 
   app.addEventListener('click', async e => {
+    // Handle Payment Mode Pill toggling
+    const pmBtn = (e.target as HTMLElement).closest('[data-pm]') as HTMLElement | null;
+    if (pmBtn && pmBtn.dataset.lid) {
+      e.preventDefault();
+      const group = pmBtn.closest('[data-pm-group]');
+      group?.querySelectorAll('[data-pm]').forEach(btn => btn.classList.remove('selected'));
+      pmBtn.classList.add('selected');
+      return;
+    }
+
     const target = (e.target as HTMLElement).closest('[data-a]') as HTMLElement | null;
     if (!target || !target.dataset.id) return;
     e.preventDefault();
@@ -1532,29 +1652,51 @@ export function bindPay(rerender: () => void, getRows: () => Row[], on: () => st
 
     if (action === 'pay') {
       const input = document.getElementById('a-' + id) as HTMLInputElement | null;
-      const rawVal = Number(input?.value || 0);
+      const cleaned = (input?.value || '').replace(/[^0-9.]/g, '');
+      const rawVal = Number(cleaned || 0);
       const amt = Math.min(rawVal, r.outstanding);
 
-      if (amt <= 0) {
-        toast('Please enter a valid amount to collect', 'error');
+      if (amt <= 0 || isNaN(amt)) {
+        toast('Please enter a valid payment amount', 'error');
         return;
       }
 
+      // Read selected Payment Mode
+      const pmSelected = document.querySelector(`[data-pm-group="${id}"] .pay-mode-pill.selected`) as HTMLElement | null;
+      const payMode = (pmSelected?.dataset.pm as PaymentMode) || 'cash';
+
+      // Read or auto-classify Payment Type
+      const ptSelect = document.getElementById('pt-' + id) as HTMLSelectElement | null;
+      let payType = (ptSelect?.value || 'auto') as PaymentType | 'auto';
+      if (payType === 'auto') {
+        if (amt >= r.outstanding - 0.5) {
+          payType = 'settlement';
+        } else if (r.paidOn > 0) {
+          payType = 'advance';
+        } else if (amt < Math.round(r.l.inst) && amt < r.outstanding) {
+          payType = 'partial';
+        } else if (amt > Math.round(r.l.inst) && r.pending <= Math.round(r.l.inst)) {
+          payType = 'advance';
+        } else {
+          payType = 'installment';
+        }
+      }
+
       target.setAttribute('disabled', 'true');
-      target.textContent = 'Collecting...';
+      target.textContent = 'Saving...';
       try {
-        await pay(id, amt, on());
-        toast(`Collected ${money(amt)} from ${r.c.name}`, 'success');
+        await pay(id, amt, on(), payMode, payType);
+        toast(`Recorded ${money(amt)} (${formatPayMode(payMode)} · ${formatPayType(payType)})`, 'success');
         rerender();
       } catch (err: any) {
         toast('Collection failed: ' + (err.message || 'Error'), 'error');
         target.removeAttribute('disabled');
-        target.textContent = '✓ Collect';
+        target.textContent = target.dataset.extra === '1' ? '✓ Confirm Extra' : '✓ Collect';
       }
     } else if (action === 'undo') {
-      if (confirm(`Undo collection for ${r.c.name}?`)) {
+      if (confirm(`Undo last payment registered today for ${r.c.name}?`)) {
         await undo(id, on());
-        toast('Payment undone', 'info');
+        toast('Last payment undone', 'info');
         rerender();
       }
     }

@@ -38,6 +38,13 @@ import {
 
       const targetToday = sum(list, dueAmt);
       const collectedToday = sum(rows, r => r.paidOn);
+      const todayPays = payments.filter(p => p.paid_on === t);
+      const cashToday = todayPays.filter(p => (p.pay_mode || 'cash') === 'cash').reduce((s, p) => s + Number(p.amount), 0);
+      const upiToday = todayPays.filter(p => p.pay_mode === 'upi').reduce((s, p) => s + Number(p.amount), 0);
+      const bankToday = todayPays.filter(p => p.pay_mode === 'bank').reduce((s, p) => s + Number(p.amount), 0);
+      const modeSub = collectedToday > 0
+        ? [cashToday ? `Cash ${money(cashToday)}` : '', upiToday ? `UPI ${money(upiToday)}` : '', bankToday ? `Bank ${money(bankToday)}` : ''].filter(Boolean).join(' · ')
+        : '0 payments received';
       const progressPercent = targetToday > 0 ? Math.min(100, Math.round((collectedToday / targetToday) * 100)) : (collectedToday > 0 ? 100 : 0);
       const totalOutstanding = sum(act, r => r.outstanding);
       const pendingTotal = sum(rows, r => r.pending);
@@ -105,7 +112,7 @@ import {
           <div class="stat-box stat-success">
             <span class="stat-label">Collected Today</span>
             <span class="stat-val c-success">${money(collectedToday)}</span>
-            <span class="stat-sub">${rows.filter(r => r.paidOn > 0).length} payments received</span>
+            <span class="stat-sub">${modeSub}</span>
           </div>
 
           <div class="stat-box stat-warning">

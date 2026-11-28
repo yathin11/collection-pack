@@ -26,6 +26,13 @@ async function render() {
   const rawList = todayList(rows, pl);
   const targetTotal = rawList.reduce((a, r) => a + dueAmt(r), 0);
   const collectedTotal = rows.reduce((a, r) => a + r.paidOn, 0);
+  const dayPays = d.payments.filter(p => p.paid_on === on);
+  const cashOn = dayPays.filter(p => (p.pay_mode || 'cash') === 'cash').reduce((s, p) => s + Number(p.amount), 0);
+  const upiOn = dayPays.filter(p => p.pay_mode === 'upi').reduce((s, p) => s + Number(p.amount), 0);
+  const bankOn = dayPays.filter(p => p.pay_mode === 'bank').reduce((s, p) => s + Number(p.amount), 0);
+  const modeSub = collectedTotal > 0
+    ? [cashOn ? `Cash ${money(cashOn)}` : '', upiOn ? `UPI ${money(upiOn)}` : '', bankOn ? `Bank ${money(bankOn)}` : ''].filter(Boolean).join(' · ')
+    : `${rows.filter(r => r.paidOn > 0).length} received today`;
   const progressPercent = targetTotal > 0 ? Math.min(100, Math.round((collectedTotal / targetTotal) * 100)) : (collectedTotal > 0 ? 100 : 0);
 
   // Filter list
@@ -71,7 +78,7 @@ async function render() {
       <div class="stat-box stat-success">
         <span class="stat-label">Collected</span>
         <span class="stat-val c-success">${money(collectedTotal)}</span>
-        <span class="stat-sub">${rows.filter(r => r.paidOn > 0).length} received today</span>
+        <span class="stat-sub">${modeSub}</span>
       </div>
 
       <div class="stat-box stat-warning">

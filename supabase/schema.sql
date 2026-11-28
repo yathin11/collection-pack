@@ -72,6 +72,8 @@ create table if not exists loans (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null default my_org() references orgs on delete cascade,
   customer_id uuid not null references customers on delete cascade,
+  parent_loan_id uuid references loans on delete set null,
+  loan_label text default 'Main Loan',
   mode text not null check (mode in ('daily', 'weekly')),
   principal numeric not null,
   int_type text not null check (int_type in ('pct', 'amt')),
@@ -89,6 +91,8 @@ create table if not exists payments (
   loan_id uuid not null references loans on delete cascade,
   paid_on date not null default current_date,
   amount numeric not null check (amount > 0),
+  pay_mode text not null default 'cash' check (pay_mode in ('cash', 'upi', 'bank')),
+  pay_type text not null default 'installment' check (pay_type in ('installment', 'partial', 'advance', 'settlement', 'penalty')),
   by_user uuid default auth.uid(),
   notes text,
   created_at timestamptz default now()
